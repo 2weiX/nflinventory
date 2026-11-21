@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+"""What the argument has concluded must happen OUTSIDE the argument.
+
+Every claim names the evidence that would change its verdict. Some of that is findable by reading, and a
+discussion agent can go and find it. Most of it is not: it has to be measured, or bought from a
+specialist, or waited for. Those are not discussion tasks, and an agent that treats them as such will
+produce another round of reasoning where an experiment was needed.
+
+bin/next prints this when it goes IDLE, so the loop ends in a handoff rather than a stop.
+"""
+import os
+import re
+import sys
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CLAIMS = os.path.join(ROOT, "discussion", "claims")
+
+GROUPS = [
+ ("legal-opinion", "NEEDS A SPECIALIST — not answerable by any amount of further reading",
+  "Both of these turn on commentary that is paywalled and was unreachable by the research and the\n"
+  "  challenge alike. One hour with a Wettbewerbsrecht/IT-Recht specialist, asked in writing, settles\n"
+  "  them. Until then D001 is blocked and no outreach channel is decided."),
+ ("measurement", "NEEDS AN EXPERIMENT — the study does not exist and would have to be run",
+  "This is where the argument has run out of road. The remaining questions are not under-researched,\n"
+  "  they are unmeasured. C005 is automatable tonight; the others need a protocol first."),
+ ("desk-research", "FINDABLE BY READING — a discussion agent can do this now",
+  "Real work, available immediately, no dependencies."),
+ ("pipeline-data", "WAITING ON THE PIPELINE — no human needed",
+  "Arrives on its own at 02:00."),
+]
+
+
+def frontmatter(path):
+    try:
+        text = open(path, encoding="utf-8").read()
+    except OSError:
+        return {}
+    m = re.match(r"\s*---\n(.*?)\n---", text, re.S)
+    if not m:
+        return {}
+    out = {}
+    for line in m.group(1).splitlines():
+        if ":" in line and not line.startswith((" ", "-", "#")):
+            k, _, v = line.partition(":")
+            out[k.strip()] = v.strip().strip('"\'')
+    return out
+
+
+def main():
+    claims = []
+    for name in sorted(os.listdir(CLAIMS)) if os.path.isdir(CLAIMS) else []:
+        fm = frontmatter(os.path.join(CLAIMS, name, "claim.md"))
+        if fm:
+            claims.append((name, fm))
+
+    print("\n=== What settling the open questions actually requires ===\n")
+    any_shown = False
+    for need, heading, note in GROUPS:
+        rows = [(n, f) for n, f in claims if f.get("needs") == need]
+        if not rows:
+            continue
+        any_shown = True
+        print(f"{heading}")
+        for n, f in rows:
+            print(f"  {f.get('id', n)}  [{f.get('status', '?')}]  {f.get('title', n)[:66]}")
+        print(f"  {note}\n")
+
+    unfillable = [(n, f) for n, f in claims if f.get("status") == "unfillable"]
+    if unfillable:
+        print("CLOSED AS UNFILLABLE — the evidence does not exist in public sources. Do not look again.")
+        for n, f in unfillable:
+            print(f"  {f.get('id', n)}  {f.get('title', n)[:66]}")
+        print()
+
+    settled = sum(1 for _, f in claims if f.get("status") == "settled")
+    openish = sum(1 for _, f in claims if f.get("status") in ("open", "researched", "challenged"))
+    print(f"{settled} settled · {openish} still in the argument · {len(claims)} total\n")
+    if not any_shown:
+        print("Nothing outstanding. That is unusual - check that claims carry a `needs:` field.")
+        return
+    print("A discussion agent can work the 'findable by reading' items. It cannot work the others, and")
+    print("should not try: producing another round of reasoning where a measurement was needed is how")
+    print("this system would fail while looking productive.")
+
+
+if __name__ == "__main__":
+    main()

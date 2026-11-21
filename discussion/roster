@@ -1,0 +1,15 @@
+# Which local command runs which role, and which MODEL that command reaches.
+# One line per role:  role: <command>  model=<model-id>
+# Same independence gate as zipbiz: bin/gate-independence refuses any challenger or
+# adjudicator round whose model already appears earlier on the same claim.
+# MINIMAL-COST roster: the builder/adjudicator rides the Claude subscription,
+# the challenger rides numes' $0 :free tier, research runs on GLM flash (pennies).
+
+researcher:  bin/hermes-round.sh   model=z-ai/glm-5.3-flash
+challenger:  bin/numes-round.sh    model=moonshotai/kimi-k3.1-pro:free
+adjudicator: bin/claude-round.sh   model=claude-sonnet-5-5
+proposer:    bin/hermes-round.sh   model=z-ai/glm-5.3-flash
+
+# Not a role bin/next hands out: the interactive session that files rounds by hand.
+operator:    (interactive)         model=claude-opus-5
+auxiliary:   (interactive)         model=claude-haiku-5-5

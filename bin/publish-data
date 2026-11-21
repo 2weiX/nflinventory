@@ -1,0 +1,57 @@
+#!/bin/sh
+# Refresh the committed aggregates from a local scan, then sync. Run on the machine that HAS the scan.
+# Safe to put in a nightly job: it publishes counts only, never the underlying records.
+set -e
+cd "$(dirname "$0")/.."
+SCAN="${ZIPBIZ_SCAN_DIR:-$HOME/mnt/ZIPWebsite}"
+[ -d "$SCAN" ] || { echo "no scan directory at $SCAN (set ZIPBIZ_SCAN_DIR)" >&2; exit 1; }
+
+# export_aggregates.py looks for the audit beside ITSELF, at pipeline/output/audit_<zip>.json. Run
+# from a clone, that directory does not exist, so the exporter fell back to "audit: not yet run" and
+# published audit-less counts - quietly, with exit code 0. Eleven nightly runs published that way
+# before anyone noticed, which is how the discussion tree ended up pinned to data with 640 audit
+# records while the scan machine had 3,270. Point the lookup at the real audit for the duration of
+# the run. The link is removed afterwards and is git-ignored, so nothing record-level enters the tree.
+LINK=pipeline/output
+if [ ! -e "$LINK" ]; then ln -s "$SCAN/output" "$LINK"; CLEANUP=1; else CLEANUP=0; fi
+cleanup() { [ "$CLEANUP" = 1 ] && rm -f "$LINK"; }
+trap cleanup EXIT INT TERM
+
+for pkl in "$SCAN"/output/state_*.pkl; do
+  [ -e "$pkl" ] || { echo "no state pickle in $SCAN/output" >&2; exit 1; }
+  zip=$(basename "$pkl" | sed 's/state_\([0-9]*\)_.*/\1/')
+  out="data/aggregates_$zip.json"
+  python3 pipeline/export_aggregates.py --state "$pkl" --out "$out"
+  # Refuse to publish counts with no audit behind them. An audit-less export is not a smaller
+  # dataset, it is a different one: every design-era number is missing rather than zero, and a claim
+  # that re-pins to it re-pins to nothing. Better to fail the nightly job loudly.
+  python3 - "$out" "$zip" <<'PY'
+import json, sys
+out, zipc = sys.argv[1], sys.argv[2]
+a = json.load(open(out))
+aud = a.get("audit")
+if not isinstance(aud, dict) or "strata" not in aud and "n_audited" not in aud:
+    sys.exit(f"REFUSING TO PUBLISH {out}: the export found no audit, so every design-era count is\n"
+             f"  absent rather than zero. Expected the audit at <scan>/output/audit_{zipc}.json.\n"
+             f"  Fix the path, re-run presence_audit.py, or publish by hand once you know why.")
+print(f"  audit present: version {a.get('version')}")
+PY
+done
+# If the sync fails, put the generated files back the way git had them.
+#
+# This is the deadlock that cost a month. publish-data regenerates data/aggregates_*.json and
+# bin/reindex regenerates discussion/index.md. When bin/sync then failed - a shell parse error in an
+# old copy, but the privacy gate refusing would do it too - neither file was ever committed, so the
+# working tree stayed permanently modified. A modified tree makes `git pull` abort. And the pull was
+# the only thing that would have delivered the fixed bin/sync. Every failure guaranteed the next one,
+# silently, for 34 nights, while the clone fell 205 commits behind.
+#
+# Reverting generated files on failure is safe precisely because they are generated: the next run
+# rebuilds them from the scan. What it buys is that a failed publish leaves a CLEAN tree, so the
+# clone can always still be pulled and the fix can always still arrive.
+if ! ./bin/sync "data: refresh aggregates from scan"; then
+  echo "SYNC FAILED - reverting the generated files so this clone can still be pulled." >&2
+  git checkout -- data/ discussion/index.md 2>/dev/null || true
+  git status --porcelain | head -5 >&2
+  exit 1
+fi

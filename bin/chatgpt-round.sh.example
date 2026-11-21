@@ -1,0 +1,8 @@
+#!/bin/sh
+# Adapter for chatgpt. Copy to bin/chatgpt-round.sh, edit the last line, chmod +x, and name it in
+# discussion/roster. The brief arrives on stdin; everything the agent needs is in it.
+set -e
+BRIEF="$(cat)"
+# Codex/ChatGPT CLIs generally take the prompt as an argument rather than on stdin:
+exec codex exec "$BRIEF"
+# or, for the OpenAI CLI:  exec openai api responses.create -m gpt-5 --input "$BRIEF"

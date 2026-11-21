@@ -1,0 +1,466 @@
+#!/usr/bin/env python3
+"""Refuse a round that checks an argument its own model made.
+
+bin/independence REPORTS self-review after the fact. This REFUSES it. A challenger or adjudicator
+round whose model already appears anywhere earlier on the same claim is not scrutiny; it is the same
+model grading its own homework, and every "upheld" it produces is worth nothing while reading like
+something. bin/sync calls this before committing, so such a round cannot enter the tree as a round.
+
+Usage:
+  bin/gate-independence FILE...        check these round files; exit 1 on violation
+  bin/gate-independence --quarantine FILE...   also rename violators out of the round sequence
+  bin/gate-independence --staged [--quarantine]
+                                       check every path under discussion/claims/ that the index
+                                       would commit (what bin/sync uses); exit 10 if rounds
+                                       were refused (and quarantined), 2 if the commit must not
+                                       happen at all; any other non-zero means the gate broke
+  bin/gate-independence --audit        check every round already in the repo; always exit 0
+"""
+import os
+import re
+import subprocess
+import sys
+import unicodedata
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CLAIMS = os.path.join(ROOT, "discussion", "claims")
+CHECKING_ROLES = {"challenger", "adjudicator"}
+ROLES = {"researcher", "challenger", "adjudicator", "proposer"}
+# What bin/next, bin/reindex and the prior-round scan below count as a live round.
+ROUND_RE = re.compile(r"^r(\d+)-")
+# The only shape a round file may have: r<NN>-<stage>--<tag>.md, lowercase ASCII, directly inside
+# discussion/claims/C<NN>-<slug>/. Anything that merely LOOKS like a round and deviates from this is
+# refused, whatever bin/next would make of it - every past bypass lived in the gap between "the
+# pattern sync selected" and "the pattern the rest of the machinery counts".
+CANON_RE = re.compile(r"^r(\d{2,})-([a-z]+(?:-[a-z]+)*)--([a-z0-9]+(?:[._-][a-z0-9]+)*)\.md$")
+CLAIM_DIR_RE = re.compile(r"^C\d+[a-z]?(?:-[A-Za-z0-9._-]*)?$")
+# Stage word in the filename -> the role whose round it is. bin/next reads the stage from the
+# filename and the gate reads the role from the frontmatter, so the two must agree.
+STAGE_ROLE = {"research": "researcher", "proposal": "proposer", "propose": "proposer",
+              "challenge": "challenger", "verdict": "adjudicator", "adjudicate": "adjudicator",
+              "adjudication": "adjudicator", "settle": "adjudicator", "drift": "adjudicator",
+              "reopen": "adjudicator", "unfillable": "adjudicator"}
+
+# Vendor words that decorate the same model under different names. "opus5", "claude-opus-5" and
+# "anthropic/claude-opus-5" are one model and were three rows in the scoreboard; a gate that treated
+# them as different models would wave self-review straight through.
+VENDORS = ("anthropic", "claude", "openai", "oai", "zai", "z", "google", "meta", "mistral",
+           "deepseek", "qwen", "xai", "openrouter")
+# Harness and machine names that have been written into the model field. They name the thing that
+# RAN the model, not the model, so they cannot establish independence.
+NOT_A_MODEL = {"harness", "harnessultron", "ultron", "claudecode", "opencode", "codex", "hermes",
+               "dennis", "dennismbp", "dennisharness", "unknown", "none", "na", "code", "cli",
+               "chat", "agent", "p", ""}
+ROSTER = os.path.join(ROOT, "discussion", "roster")
+# Letters from other scripts that render as ASCII ones and survive NFKD.
+CONFUSABLES = str.maketrans({"ɡ": "g", "ɑ": "a", "ı": "i", "ȷ": "j", "ℓ": "l", "ο": "o", "о": "o",
+                             "а": "a", "е": "e", "с": "c", "р": "p", "х": "x", "у": "y", "ѕ": "s",
+                             "і": "i", "ј": "j", "ԁ": "d", "ß": "ss"})
+
+
+def fold(raw):
+    """NFKC, accents stripped, lowercased, look-alikes mapped to ASCII, invisible chars dropped."""
+    s = unicodedata.normalize("NFKC", raw or "")
+    s = "".join(c for c in unicodedata.normalize("NFKD", s)
+                if not unicodedata.combining(c) and unicodedata.category(c) != "Cf")
+    return s.lower().translate(CONFUSABLES)
+
+
+def canonical(raw):
+    """Fold one model string to a comparable token, or '' if it does not name a model."""
+    s = fold((raw or "").strip().strip('"\'')).strip()
+    s = s.split("(")[0]                     # "glm-5.3-flash (z-ai/glm-5.3-flash)"
+    if re.sub(r"[^a-z0-9]", "", s) in NOT_A_MODEL:
+        return ""                           # "N/A" - before the slash split turns it into "a"
+    s = s.split("/")[-1]                    # "openrouter/openai/gpt-6.1-sol"
+    if any(ord(c) > 127 and c.isalnum() for c in s):
+        return ""                           # a letter fold() could not place: refuse, do not guess
+    s = re.sub(r"[^a-z0-9]", "", s)
+    while s not in VENDORS:                 # "anthropicclaudesonnet55" -> "sonnet55"
+        v = next((v for v in VENDORS if s.startswith(v) and len(s) > len(v)), None)
+        if v is None:
+            break
+        s = s[len(v):]
+    return "" if s in NOT_A_MODEL or s in VENDORS else s
+
+
+def declared():
+    """Canonical models the roster declares, as {canonical: as-written}.
+
+    This is what makes the gate fail CLOSED. Folding model strings by similarity alone cannot be
+    trusted in the one direction that matters: "sonnet5" and "claude-sonnet-5-5" fold apart, so a
+    sloppy label would read as a different model and wave self-review through. Requiring every
+    checking round to name a model the roster declares removes the guess - an undeclared label is
+    refused rather than assumed independent.
+    """
+    out = {}
+    try:
+        text = open(ROSTER, encoding="utf-8").read()
+    except OSError:
+        return out
+    for line in text.splitlines():
+        line = line.split("#")[0].strip()
+        m = re.match(r"^([a-z]+)\s*:\s*(\S+)(.*)$", line)
+        if not m:
+            continue
+        mm = re.search(r"model\s*=\s*(\S+)", m.group(3) or "")
+        if mm:
+            out[canonical(mm.group(1))] = mm.group(1)
+    out.pop("", None)
+    return out
+
+
+def parse_frontmatter(text):
+    """({key: value}, {keys that appear more than once}) from a round's frontmatter block."""
+    m = re.match(r"\s*---\n(.*?)\n---", text or "", re.S)
+    if not m:
+        return {}, set()
+    out, dup = {}, set()
+    for line in m.group(1).splitlines():
+        if ":" in line and not line.startswith((" ", "-", "#")):
+            k, _, v = line.partition(":")
+            k = k.strip()
+            if k in out:
+                dup.add(k)
+            out[k] = v.strip().strip('"\'')
+    return out, dup
+
+
+def read(path):
+    try:
+        with open(path, encoding="utf-8") as fh:
+            return fh.read()
+    except (OSError, UnicodeDecodeError):
+        return None
+
+
+def frontmatter(path):
+    return parse_frontmatter(read(path))[0]
+
+
+def round_no(fn):
+    m = ROUND_RE.match(fn)
+    return int(m.group(1)) if m else None
+
+
+def looks_like_round(fn):
+    """Anything a reader could take for a round file: 'r02-', ' r02-', 'R02-', 'r02 x', 'ｒ02-'."""
+    return round_no(fn) is not None or bool(re.match(r"^\W*r\W*\d", fold(fn).strip()))
+
+
+def stage_role(fn):
+    """The role a canonical round filename declares, or None if its stage words are unknown or
+    name more than one role (bin/next must not be able to read a different stage out of it)."""
+    m = CANON_RE.match(fn)
+    if not m:
+        return None
+    words = m.group(2).split("-")
+    roles = {STAGE_ROLE[w] for w in words if w in STAGE_ROLE}
+    return roles.pop() if words[0] in STAGE_ROLE and len(roles) == 1 else None
+
+
+def shape(path):
+    """'' if path is a well-formed round file in the right place, otherwise the reason it is not."""
+    ap = os.path.abspath(path)
+    d, fn = os.path.dirname(ap), os.path.basename(ap)
+    if os.path.realpath(os.path.dirname(d)) != os.path.realpath(CLAIMS):
+        return "a round file must sit directly inside discussion/claims/C<NN>-<slug>/"
+    if not CLAIM_DIR_RE.match(os.path.basename(d)):
+        return f"claim directory {os.path.basename(d)!r} is not C<NN>-<slug> in plain ASCII"
+    m = CANON_RE.match(fn)
+    if not m:
+        return ("the name is not r<NN>-<stage>--<model>.md in lowercase ASCII (no spaces, no\n"
+                "  look-alike or accented letters, suffix exactly .md)")
+    if int(m.group(1)) < 1:
+        return "round numbers start at r01"
+    if stage_role(fn) is None:
+        return (f"stage {m.group(2)!r} does not name exactly one role; known stage words: "
+                + ", ".join(sorted(STAGE_ROLE)))
+    # bin/next infers the stage by searching the whole filename, so a stage word in the model tag
+    # (r01-research--challenge-bot.md) would read as a challenge that never happened (LC-1).
+    words = [w for w in re.split(r"[._-]", m.group(3)) if w in STAGE_ROLE]
+    if words:
+        return (f"model tag {m.group(3)!r} contains the stage word {words[0]!r}; bin/next would read\n"
+                "  it as that stage")
+    if os.path.islink(ap):
+        return "a round file may not be a symlink"
+    return ""
+
+
+def check(path, committed=()):
+    """Return (ok, message). path is a round file inside a claim directory.
+
+    committed: (filename, role, model, canonical, round) for the rounds HEAD holds in the same
+    claim directory. bin/sync passes them so that a round edited or deleted in the same commit
+    still counts as prior, and so that a new round cannot be numbered in under an existing one.
+    """
+    d, fn = os.path.dirname(os.path.abspath(path)), os.path.basename(path)
+    base = fn
+    # Round filenames repeat across claims (every claim has an r02-challenge), so a message that
+    # names only the file cannot be acted on. Carry the claim directory into every message.
+    fn = os.path.join(os.path.basename(d), fn) if os.path.basename(d).startswith("C") else fn
+    if not looks_like_round(base):
+        return True, ""                     # not a round file; nothing to gate
+
+    # Fail closed on shape. A file that reads as a round but deviates from the one canonical
+    # pattern is refused, not interpreted: bin/next counts any r<NN>- file, so leniency here is
+    # exactly the gap a self-review walked through.
+    why = shape(path)
+    if why:
+        return False, (
+            f"{fn}\n"
+            f"  malformed round file: {why}.\n"
+            f"  A file that looks like a round but does not match the canonical pattern cannot be\n"
+            f"  attributed with confidence, so it is refused rather than guessed at.")
+    n = round_no(base)
+    fm, dup = parse_frontmatter(read(path))
+    if not fm:
+        return False, (
+            f"{fn}\n"
+            f"  has no frontmatter. Every round declares claim, round, role and model (AGENTS.md);\n"
+            f"  a round that says nothing about who wrote it cannot be shown independent.")
+    if dup & {"role", "model"}:
+        return False, (
+            f"{fn}\n"
+            f"  declares {', '.join(sorted(dup & {'role', 'model'}))} more than once. One round, one\n"
+            f"  role, one model.")
+    role = (fm.get("role") or "").strip().lower()
+    want = stage_role(base)
+    if role not in ROLES:
+        return False, (
+            f"{fn}\n"
+            f"  role: {fm.get('role', '(absent)')!r} is not one of {', '.join(sorted(ROLES))}.")
+    if role != want:
+        return False, (
+            f"{fn}\n"
+            f"  the filename makes this a {want} round but the frontmatter says role: {role}.\n"
+            f"  bin/next reads the filename and the gate reads the frontmatter; they must agree.")
+    if committed and n <= max(c[4] for c in committed):
+        return False, (
+            f"{fn}\n"
+            f"  round {n} is out of sequence: the claim already holds round "
+            f"{max(c[4] for c in committed)}. A new round is numbered after every existing one.")
+    if role not in CHECKING_ROLES:
+        return True, ""                     # research and proposals check nobody
+
+    mine = canonical(fm.get("model"))
+    if not mine:
+        return False, (
+            f"{fn}\n"
+            f"  role {role} but model: {fm.get('model', '(absent)')!r} does not name a model.\n"
+            f"  A checking round that cannot be attributed to a model cannot be shown independent,\n"
+            f"  so it cannot be accepted. Put the harness in harness: and the model in model:.")
+
+    known = declared()
+    if not known:
+        return False, (
+            f"{fn}\n"
+            f"  role {role}, but discussion/roster is missing or declares no model=. Without it the\n"
+            f"  gate would have to guess whether {fm.get('model')!r} is a new model or a nickname for\n"
+            f"  one already on this claim, so it refuses. Restore the roster.")
+    if mine not in known:
+        return False, (
+            f"{fn}\n"
+            f"  role {role}, model {fm.get('model')!r} is not declared in discussion/roster.\n"
+            f"  The gate will not guess whether an undeclared label is a new model or a nickname for\n"
+            f"  one already on this claim - guessing wrong permits exactly the self-review the gate\n"
+            f"  exists to stop. Declare it on the role's roster line as model=<id>, using the same\n"
+            f"  string the round writes, or write the declared string in the round.\n"
+            f"  Declared: " + ", ".join(sorted(known.values())))
+
+    # Every round that came before this one on this claim - and any other round sharing its
+    # number, since bin/next does not order rounds of the same number.
+    prior = []
+    for f in sorted(os.listdir(d)):
+        k = round_no(f)
+        if k is None or k > n or f == base:
+            continue
+        pfm = frontmatter(os.path.join(d, f))
+        prior.append((f, pfm.get("role", "?"), pfm.get("model", "?"), canonical(pfm.get("model"))))
+    prior += [c[:4] for c in committed if c[4] <= n and c[0] != base]
+
+    # The owner's independence ruling (2026-11-08): round-robin, not virgin-per-claim.
+    #   - A round may not be written by the model that wrote the round directly before it.
+    #   - Within one cycle (the rounds after the most recent settle/drift/reopen/unfillable)
+    #     the challenger must not be the researcher's model and the adjudicator must not be
+    #     either (AGENTS.md: an adjudicator may not be the researcher or the challenger).
+    #   - A checking round CLOSES its cycle: the models of a finished cycle no longer bar
+    #     later rounds, so a three-model roster can carry a claim to completion.
+    BOUNDARY_STAGES = {"settle", "drift", "reopen", "unfillable"}
+
+    def boundary(pname):
+        m = CANON_RE.match(os.path.basename(pname))
+        return bool(m) and m.group(2) in BOUNDARY_STAGES
+
+    cycle_start = 1 + max([round_no(f) for f, *_ in prior if boundary(f)], default=0)
+    my_stage = CANON_RE.match(base).group(2)
+    if my_stage in BOUNDARY_STAGES:
+        last = max((round_no(p[0]) for p in prior), default=0)
+        clash = [p for p in prior if round_no(p[0]) == last and p[3] and p[3] == mine]
+        why = ("wrote the round directly before this one. Round-robin: at least one different\n"
+               "  model must sit between; settle or re-pin from a model that did not write the\n"
+               "  verdict immediately preceding this round.")
+    else:
+        clash = [p for p in prior if round_no(p[0]) >= cycle_start and p[3] and p[3] == mine]
+        why = "checks an argument its own model wrote in this cycle"
+    if clash:
+        lines = "\n".join(f"    {f}  (role {r}, model {m})" for f, r, m, _ in sorted(set(clash)))
+        return False, (
+            f"{fn}\n"
+            f"  role {role}, model {fm.get('model')}\n"
+            f"  {why}:\n{lines}\n"
+            f"  Hand this round to a model that satisfies the round-robin rule.")
+    return True, ""
+
+
+def quarantine(path, why):
+    d, fn = os.path.dirname(os.path.abspath(path)), os.path.basename(path)
+    dest = os.path.join(d, "rejected-" + fn)
+    i = 2
+    while os.path.lexists(dest):
+        dest, i = os.path.join(d, f"rejected-{i}-{fn}"), i + 1
+    with open(path, "rb") as fh:            # bytes: a refused file need not be valid UTF-8
+        body = fh.read()
+    head = ("<!-- REJECTED by bin/gate-independence: a round may not check an argument its own\n"
+            "model made. This file is kept so the reasoning is not lost, but it is NOT a round:\n"
+            "its name no longer matches r##-, so bin/next, bin/independence and the index skip it.\n"
+            "The claim still needs this role, filled by a different model.\n\n"
+            + why.rstrip() + "\n-->\n\n")
+    with open(dest, "wb") as fh:
+        fh.write(head.encode("utf-8", "surrogateescape") + body)
+    os.remove(path)
+    return os.path.relpath(dest, ROOT)
+
+
+# --- what bin/sync is about to commit ------------------------------------------------------------
+# bin/sync used to pick the files to gate out of `git status --porcelain` text. Every confirmed
+# bypass was a file that parse missed: a space in the name, a quoted non-ASCII name, a suffix other
+# than .md, a brand-new claim directory listed as one line. So the gate now asks git itself, NUL-
+# separated, for every path under discussion/claims/ that the index would commit, and gates all of
+# them. Nothing is selected by a pattern that could disagree with what bin/next counts.
+
+def git(*args):
+    r = subprocess.run(["git", "-c", "core.quotepath=off", *args], cwd=ROOT, capture_output=True)
+    if r.returncode:
+        raise RuntimeError(f"git {' '.join(args)} failed: {r.stderr.decode(errors='replace')}")
+    return r.stdout
+
+
+def head_exists():
+    return subprocess.run(["git", "rev-parse", "--verify", "-q", "HEAD"], cwd=ROOT,
+                          capture_output=True).returncode == 0
+
+
+def staged_changes():
+    """[(status letter, repo-relative path)] the index would commit under discussion/claims/."""
+    base = "HEAD" if head_exists() else git("hash-object", "-t", "tree", os.devnull).decode().strip()
+    out = git("diff", "--cached", "--name-status", "-z", "--no-renames", base,
+              "--", "discussion/claims")
+    parts = out.decode("utf-8", "surrogateescape").split("\0")
+    if parts and parts[-1] == "":
+        parts.pop()
+    if len(parts) % 2:
+        raise RuntimeError("could not parse git diff --name-status -z output")
+    return [(parts[i][:1], parts[i + 1]) for i in range(0, len(parts), 2)]
+
+
+def committed_rounds(claim_rel):
+    """(filename, role, model, canonical, round) for each live round HEAD holds in claim_rel."""
+    if not head_exists():
+        return []
+    names = git("ls-tree", "-z", "--name-only", "HEAD", "--", claim_rel.rstrip("/") + "/")
+    out = []
+    for p in names.decode("utf-8", "surrogateescape").split("\0"):
+        f = os.path.basename(p)
+        k = round_no(f) if p else None
+        if k is None:
+            continue
+        fm = parse_frontmatter(git("show", f"HEAD:{p}").decode("utf-8", "replace"))[0]
+        out.append((f, fm.get("role", "?"), fm.get("model", "?"), canonical(fm.get("model")), k))
+    return out
+
+
+def gate_staged():
+    """(files to check with their committed context, hard refusals that must stop the commit)."""
+    targets, hard, cache = [], [], {}
+    for st, rel in staged_changes():
+        fn = os.path.basename(rel)
+        if not looks_like_round(fn):
+            continue
+        claim_rel = os.path.dirname(rel)
+        if claim_rel not in cache:
+            cache[claim_rel] = committed_rounds(claim_rel)
+        committed = cache[claim_rel]
+        old = next((c for c in committed if c[0] == fn), None)
+        if st == "D":
+            if old:
+                hard.append(f"{rel}\n  deletes a committed round. Rounds are never deleted - a round that\n"
+                            f"  should not count is re-argued by another model (AGENTS.md). Restore it.")
+            continue
+        if st == "M" and old:
+            new = frontmatter(os.path.join(ROOT, rel))
+            if (new.get("role", "?"), new.get("model", "?")) != (old[1], old[2]):
+                hard.append(f"{rel}\n  rewrites the role/model of a committed round "
+                            f"({old[1]}/{old[2]} -> {new.get('role', '?')}/{new.get('model', '?')}).\n"
+                            f"  Attribution is history; restore it and file a new round instead.")
+            continue                        # an edit that keeps its attribution is not a new round
+        targets.append((os.path.join(ROOT, rel), committed))
+    return targets, hard
+
+
+def main():
+    args = [a for a in sys.argv[1:]]
+    do_q = "--quarantine" in args
+    audit = "--audit" in args
+    files = [(a, ()) for a in args if not a.startswith("--")]
+    staged = "--staged" in args
+
+    if staged:
+        files, hard = gate_staged()
+        if hard:
+            print("\n=== INDEPENDENCE GATE: commit refused ===\n", file=sys.stderr)
+            for msg in hard:
+                print("  " + msg.replace("\n", "\n  ") + "\n", file=sys.stderr)
+            return 2
+
+    if audit:
+        files = []
+        for top, dirs, names in os.walk(CLAIMS):
+            dirs.sort()
+            files += [(os.path.join(top, f), ()) for f in sorted(names) if looks_like_round(f)]
+
+    bad = []
+    for f, committed in files:
+        ok, msg = check(f, committed)
+        if not ok:
+            bad.append((f, msg))
+
+    if not bad:
+        if audit:
+            print(f"independence gate: {len(files)} round(s) checked, no self-review.")
+        return 0
+
+    print("\n=== INDEPENDENCE GATE: %d round(s) refused ===\n" % len(bad), file=sys.stderr)
+    for f, msg in bad:
+        print("  " + msg.replace("\n", "\n  "), file=sys.stderr)
+        if do_q:
+            print(f"  -> quarantined as {quarantine(f, msg)}\n", file=sys.stderr)
+        else:
+            print("", file=sys.stderr)
+    if audit:
+        print("Audit mode: reporting only. These are already committed; re-argue them with a\n"
+              "different model rather than deleting the history.", file=sys.stderr)
+        return 0
+    # In --staged mode a refusal has its own code: a gate that crashes at import exits 1, and
+    # bin/sync must never mistake that for "refused and quarantined, commit the quarantine".
+    return 10 if staged else 1
+
+
+if __name__ == "__main__":
+    # Anything that goes wrong inside the gate must not read as a pass or as a quarantine: it
+    # exits 2, and bin/sync stops without committing.
+    try:
+        sys.exit(main())
+    except Exception as e:                  # noqa: BLE001 - fail closed on any error
+        print(f"independence gate could not run: {e!r}", file=sys.stderr)
+        sys.exit(2)

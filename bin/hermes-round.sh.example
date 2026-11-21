@@ -1,0 +1,12 @@
+#!/bin/sh
+# Adapter: bridge bin/overnight's stdin brief to a harness that wants the prompt as an argument.
+#
+# bin/overnight pipes the brief on stdin and defaults to `claude -p`, which reads stdin. A harness
+# taking the prompt as an argument needs this shim - and it must be a FILE on disk, not an inline
+# command, because nested quoting inside a crontab entry or a launchd plist is what breaks first.
+#
+#   cp bin/hermes-round.sh.example bin/hermes-round.sh   # then edit, chmod +x, and point at it:
+#   ZIPBIZ_AGENT_CMD=/path/to/zipbiz/bin/hermes-round.sh bin/install-schedule 05:00 12
+set -e
+BRIEF="$(cat)"                 # the whole brief, including the role contract
+exec hermes-agent run --prompt "$BRIEF"    # <- replace with your harness's actual invocation

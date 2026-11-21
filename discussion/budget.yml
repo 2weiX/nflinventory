@@ -1,0 +1,3 @@
+# Bounds for an overnight circle of discussion. bin/next and bin/overnight read this.
+max_rounds_per_night: 8
+max_claims_in_flight: 6

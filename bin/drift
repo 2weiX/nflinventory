@@ -1,0 +1,152 @@
+#!/usr/bin/env python3
+"""Which claims rest on numbers that have since moved?
+
+Claims about the world are settled by external evidence and stay settled. Claims about OUR dataset are
+not: enrichment finds websites, retries resolve broken sites, the audit goes from sample to census, and
+new postcodes change the composition. Those claims carry `kind: internal` and a `data_version`, and this
+reports when the ground under them has shifted.
+
+Usage:  bin/drift              compare every pinned claim against the current aggregates
+        bin/drift --history    show the trajectory of each trade's gap rate across snapshots
+"""
+import glob
+import json
+import os
+import re
+import sys
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA = os.path.join(ROOT, "data")
+CLAIMS = os.path.join(ROOT, "discussion", "claims")
+THRESHOLD = 0.03  # 3 percentage points on a rate, or 3% relative on a count
+
+
+def frontmatter(path):
+    try:
+        text = open(path, encoding="utf-8").read()
+    except OSError:
+        return {}
+    m = re.match(r"\s*---\n(.*?)\n---", text, re.S)
+    if not m:
+        return {}
+    out = {}
+    for line in m.group(1).splitlines():
+        if ":" in line and not line.startswith((" ", "-", "#")):
+            k, _, v = line.partition(":")
+            out[k.strip()] = v.strip().strip('"\'')
+    return out
+
+
+def load(p):
+    try:
+        return json.load(open(p, encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def rates(agg):
+    """The decision-relevant numbers: addressable count and rate per trade."""
+    out = {}
+    for t, d in (agg.get("by_trade") or {}).items():
+        n = d.get("n") or 0
+        if n:
+            out[t] = (d.get("addressable", 0), d.get("addressable", 0) / n)
+    return out
+
+
+def main():
+    current = {os.path.basename(p).split("_")[1].split(".")[0]: load(p)
+               for p in glob.glob(os.path.join(DATA, "aggregates_*.json"))}
+    current = {k: v for k, v in current.items() if v}
+    if not current:
+        print("no aggregates in data/ - run bin/publish-data on the machine holding the scan")
+        return
+
+    if "--history" in sys.argv:
+        for zipc in sorted(current):
+            snaps = sorted(glob.glob(os.path.join(DATA, "history", f"aggregates_{zipc}_*.json")))
+            if len(snaps) < 2:
+                print(f"{zipc}: {len(snaps)} snapshot(s) - no trajectory yet. "
+                      f"The trend becomes evidence once there are a few.")
+                continue
+            print(f"\n=== {zipc}: addressable rate per trade across {len(snaps)} snapshots ===")
+            series = [(os.path.basename(s).split("_")[2], rates(load(s))) for s in snaps]
+            trades = sorted({t for _, r in series for t in r},
+                            key=lambda t: -series[-1][1].get(t, (0, 0))[0])
+            print("trade".ljust(34) + "  ".join(d[5:] for d, _ in series))
+            for t in trades[:12]:
+                cells = [f"{r[t][1]*100:4.0f}%" if t in r else "   -" for _, r in series]
+                first = next((r[t][1] for _, r in series if t in r), None)
+                last = series[-1][1].get(t, (0, None))[1]
+                arrow = ""
+                if first is not None and last is not None:
+                    d = (last - first) * 100
+                    arrow = f"   {d:+.1f}pp" if abs(d) >= 0.1 else "    flat"
+                print(t[:32].ljust(34) + " ".join(cells) + arrow)
+        return
+
+    pinned, unpinned, drifted = 0, [], []
+    for name in sorted(os.listdir(CLAIMS)) if os.path.isdir(CLAIMS) else []:
+        d = os.path.join(CLAIMS, name)
+        if not os.path.isdir(d):
+            continue
+        fm = frontmatter(os.path.join(d, "claim.md"))
+        if fm.get("kind") != "internal":
+            continue
+        dv = fm.get("data_version", "")
+        if not dv:
+            unpinned.append(name)
+            continue
+        pinned += 1
+        live = [z for z, a in current.items() if a.get("version") != dv]
+        if live:
+            was = None
+            for s in glob.glob(os.path.join(DATA, "history", "aggregates_*.json")):
+                a = load(s)
+                if a and a.get("version") == dv:
+                    was = a
+                    break
+            moved, note = [], ""
+            if was is None:
+                note = "pinned snapshot is not in data/history - cannot show what moved"
+            else:
+                cur = current[live[0]]
+                old, new = rates(was), rates(cur)
+                for t in sorted(set(old) | set(new)):
+                    o, n = old.get(t, (0, 0)), new.get(t, (0, 0))
+                    if abs(n[1] - o[1]) >= THRESHOLD or (o[0] and abs(n[0] - o[0]) / o[0] >= THRESHOLD):
+                        moved.append(f"{t[:28]} {o[0]}→{n[0]} ({o[1]*100:.0f}%→{n[1]*100:.0f}%)")
+                if not moved:
+                    # the version changed but no trade crossed the threshold: say WHAT changed instead,
+                    # because "nothing material moved" and "cannot tell" call for opposite actions
+                    ow, nw = was.get("audit", {}), cur.get("audit", {})
+                    if ow.get("n_audited") != nw.get("n_audited"):
+                        note = (f"gap rates unchanged; the audit moved "
+                                f"{ow.get('n_audited', 'pending')} → {nw.get('n_audited', 'pending')} "
+                                f"sites. New evidence, same counts - likely a re-pin, not a re-check.")
+                    else:
+                        note = ("gap rates unchanged and no new audit coverage; the version moved on some "
+                                "other field. Likely a re-pin.")
+            drifted.append((name, fm.get("status", "?"), dv, moved, note))
+
+    if unpinned:
+        print("UNPINNED  internal claims with no data_version - settle them against a version:")
+        for n in unpinned:
+            print(f"  {n}")
+        print()
+    if not drifted:
+        print(f"NO DRIFT  {pinned} internal claim(s) pinned, all against the current data version.")
+        return
+    print(f"DRIFT  {len(drifted)} internal claim(s) rest on numbers that have since moved.\n")
+    for name, status, dv, moved, note in drifted:
+        print(f"  {name}  [{status}]  pinned to {dv}")
+        for m in moved[:6]:
+            print(f"      {m}")
+        if note:
+            print(f"      {note}")
+    print("\nRe-check these before relying on them. A claim about our own dataset is only as settled as")
+    print("the data it was settled against - that is what `kind: internal` means.")
+
+
+if __name__ == "__main__":
+    main()

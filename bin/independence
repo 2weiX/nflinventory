@@ -1,0 +1,71 @@
+#!/usr/bin/env python3
+"""Which claims were argued by more than one model, and which are self-review.
+
+A verdict reached by three instances of one model is one opinion with three signatures. This makes
+that visible per claim rather than leaving it to each adjudicator's honesty.
+"""
+import os
+import re
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CLAIMS = os.path.join(ROOT, "discussion", "claims")
+
+
+def frontmatter(path):
+    try:
+        text = open(path, encoding="utf-8").read()
+    except OSError:
+        return {}
+    m = re.match(r"\s*---\n(.*?)\n---", text, re.S)
+    if not m:
+        return {}
+    out = {}
+    for line in m.group(1).splitlines():
+        if ":" in line and not line.startswith((" ", "-", "#")):
+            k, _, v = line.partition(":")
+            out[k.strip()] = v.strip().strip('"\'')
+    return out
+
+
+rows, models = [], {}
+for name in sorted(os.listdir(CLAIMS)) if os.path.isdir(CLAIMS) else []:
+    d = os.path.join(CLAIMS, name)
+    if not os.path.isdir(d):
+        continue
+    fm = frontmatter(os.path.join(d, "claim.md"))
+    byrole = {}
+    for r in sorted(f for f in os.listdir(d) if re.match(r"r\d+-", f)):
+        rf = frontmatter(os.path.join(d, r))
+        mdl = rf.get("model", "?")
+        byrole.setdefault(rf.get("role", "?"), []).append(mdl)
+        models[mdl] = models.get(mdl, 0) + 1
+    if not byrole:
+        continue
+    distinct = {m for ms in byrole.values() for m in ms}
+    res, chal = byrole.get("researcher", []), byrole.get("challenger", [])
+    cross = bool(res and chal and set(res) != set(chal))
+    rows.append((fm.get("id", name), fm.get("status", "?"), fm.get("verdict", "-"),
+                 len(distinct), cross, byrole))
+
+print("\n=== Was the argument independent, or self-review? ===\n")
+print(f"{'claim':<7}{'status':<14}{'verdict':<11}{'models':<8}challenger vs researcher")
+print("-" * 68)
+for cid, st, vd, nm, cross, byrole in rows:
+    mark = "different" if cross else ("SAME MODEL - self-review" if byrole.get("challenger")
+                                      else "not challenged yet")
+    print(f"{cid:<7}{st:<14}{vd:<11}{nm:<8}{mark}")
+
+selfrev = [r for r in rows if not r[4] and r[5].get("challenger")]
+print("\nmodels seen: " + ", ".join(f"{m} ({n} rounds)"
+                                    for m, n in sorted(models.items(), key=lambda x: -x[1])))
+if len(models) <= 1 and models:
+    print("\nONE MODEL ONLY. Every 'upheld' here currently means 'survived self-review', which is much")
+    print("weaker than it reads. Assign a different command to the challenger role in")
+    print("discussion/roster - that is the single change that makes the verdicts mean what they say.")
+elif selfrev:
+    print(f"\n{len(selfrev)} claim(s) were challenged by the same model that researched them:")
+    for r in selfrev:
+        print(f"  {r[0]}")
+    print("Re-challenge these with a different model before relying on their verdicts.")
+else:
+    print("\nEvery challenged claim was challenged by a different model than researched it.")

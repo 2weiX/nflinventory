@@ -1,0 +1,64 @@
+#!/bin/sh
+# Run a bounded circle of discussion. Usage: bin/overnight [max_rounds]
+# Needs a local agent CLI. Defaults to `claude -p`; override with ZIPBIZ_AGENT_CMD.
+# Stops on IDLE, on budget, or on a sync failure - never spins.
+set -e
+cd "$(dirname "$0")/.."
+MAX="${1:-8}"
+DEFAULT_CMD="${ZIPBIZ_AGENT_CMD:-claude -p}"
+
+# Pick the command for a role from discussion/roster, so the challenger is a different model from
+# the researcher it is challenging. Falls back to the default if the role is not listed.
+cmd_for_role() {
+  if [ -f discussion/roster ]; then
+    # take only the command token - the line also carries model=<id>, and testing
+    # executability of the whole rest-of-line made every role fall back to the default
+    c=$(sed -n "s/^[[:space:]]*$1[[:space:]]*:[[:space:]]*\\([^[:space:]]*\\).*/\\1/p" discussion/roster | head -1)
+    if [ -n "$c" ] && [ -x "$c" ]; then printf '%s' "$c"; return; fi
+    if [ -n "$c" ]; then
+      echo "  roster names '$c' for role $1 but it is not executable - using the default" >&2
+    fi
+  fi
+  printf '%s' "$DEFAULT_CMD"
+}
+rounds_snapshot() { ls discussion/claims/*/r[0-9]*.md 2>/dev/null | sort; }
+: "${ZIPBIZ_AGENT:=$(hostname | tr -cd '[:alnum:]' | cut -c1-12)}"
+export ZIPBIZ_AGENT
+LOG="discussion/rounds/$(date +%Y-%m-%d)-$ZIPBIZ_AGENT.log"
+mkdir -p discussion/rounds
+
+i=0
+while [ "$i" -lt "$MAX" ]; do
+  i=$((i + 1))
+  git pull --rebase --quiet origin "$(git rev-parse --abbrev-ref HEAD)" || true
+  BRIEF="$(python3 bin/next)"
+  # IDLE may not be the first line: BLOCKED claims and the os.system backlog banner can
+  # precede it in the pipe, so look for it in the first lines rather than the prefix
+  if printf '%s\n' "$BRIEF" | head -8 | grep -q '^IDLE'; then
+    echo "[$(date +%H:%M)] IDLE after $((i - 1)) rounds - stopping" | tee -a "$LOG"
+    exit 0
+  fi
+  ROLE=$(printf '%s' "$BRIEF" | sed -n 's/.*role=\([a-z]*\).*/\1/p' | head -1)
+  [ -n "$ROLE" ] || ROLE=researcher
+  # a settle/drift brief carries DISPATCH: the round-robin model that must write it
+  DISPATCH=$(printf '%s' "$BRIEF" | sed -n 's/^DISPATCH[[:space:]]*\([^[:space:]]*\).*/\1/p' | head -1)
+  if [ -n "$DISPATCH" ] && [ -x "$DISPATCH" ]; then CMD="$DISPATCH"; else CMD=$(cmd_for_role "$ROLE"); fi
+  BEFORE=$(rounds_snapshot)
+  echo "[$(date +%H:%M)] round $i/$MAX  role=$ROLE  via $CMD" | tee -a "$LOG"
+  echo "$BRIEF" | head -3 | tee -a "$LOG"
+  printf '%s\n\n%s\n' "Read AGENTS.md, then carry out exactly this one task and write the one file it names." \
+    "$BRIEF" | $CMD >> "$LOG" 2>&1 || { echo "agent failed, stopping" | tee -a "$LOG"; exit 1; }
+  AFTER=$(rounds_snapshot)
+  if [ "$BEFORE" = "$AFTER" ]; then
+    echo "[$(date +%H:%M)] no round file written - agent refused or stalled; stopping the night" | tee -a "$LOG"
+    exit 0
+  fi
+  ./bin/sync || { echo "sync failed, stopping" | tee -a "$LOG"; exit 1; }
+  AFTER=$(rounds_snapshot)
+  if [ "$BEFORE" = "$AFTER" ]; then
+    # sync quarantined the round (gate refusal): the identical brief would repeat next round
+    echo "[$(date +%H:%M)] round was quarantined - same brief would repeat; stopping the night" | tee -a "$LOG"
+    exit 0
+  fi
+done
+echo "[$(date +%H:%M)] reached max_rounds=$MAX" | tee -a "$LOG"

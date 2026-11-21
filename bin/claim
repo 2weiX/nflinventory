@@ -1,0 +1,39 @@
+#!/bin/sh
+# Scaffold a new claim.  Usage: bin/claim "cold email lawfulness" "what would change the verdict"
+set -e
+cd "$(dirname "$0")/.."
+[ -n "$1" ] || { echo "usage: bin/claim \"title\" \"falsifier\"" >&2; exit 1; }
+SLUG=$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-' | sed 's/^-//;s/-$//' | cut -c1-40)
+N=$(ls -1 discussion/claims 2>/dev/null | sed -n 's/^C\([0-9]\{3\}\).*/\1/p' | sort -n | tail -1)
+# Strip leading zeros before arithmetic: $((020 + 1)) is OCTAL in both bash and dash and yields 17,
+# which silently duplicated C017. 10#$N would fix it in bash but is not POSIX, and this runs under sh.
+N=$(printf '%s' "${N:-0}" | sed 's/^0*//')
+ID=$(printf 'C%03d' $(( ${N:-0} + 1 )))
+D="discussion/claims/$ID-$SLUG"
+mkdir -p "$D"
+cat > "$D/claim.md" <<INNER
+---
+id: $ID
+title: $1
+status: open
+verdict: open
+round: 0
+confidence: unknown
+falsifier: ${2:-TODO - name the evidence that would change the verdict, before researching}
+decides: []
+opened: $(date +%Y-%m-%d)
+---
+
+## Claim
+
+$1
+
+## Why it matters
+
+TODO - which decision depends on this.
+
+## Falsifier
+
+${2:-TODO - a claim without a falsifier cannot be settled, because nothing could unsettle it.}
+INNER
+echo "$D/claim.md"

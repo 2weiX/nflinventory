@@ -1,0 +1,105 @@
+#!/bin/sh
+# Regenerate the index, commit this round, rebase onto origin and push. Retries a race three times.
+# Never force-pushes: if it still fails, it stops and tells you.
+set -e
+cd "$(dirname "$0")/.."
+BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+
+# --- independence gate -------------------------------------------------------------------------
+# Every round reaches the tree through this script, which makes it the one place the requirement can
+# actually be enforced: a challenger or adjudicator round may not check an argument its own model
+# made. A refused round is QUARANTINED rather than deleted - renamed out of the r##- sequence, so
+# the reasoning survives in the history while counting as no round at all, and the claim still shows
+# as needing that role from a different model.
+#
+# The gate is handed exactly what this commit would carry: stage everything first, then let the gate
+# ask git (NUL-separated, every path under discussion/claims/) instead of parsing `git status` text
+# here. The old awk/grep selection missed names with spaces, quoted non-ASCII names, non-.md
+# suffixes and whole new claim directories, and each miss was a self-review committed as a round.
+# Exit 10 = refused and quarantined (commit the quarantine); 0 = clean; anything else - including
+# a gate that crashed - means do not commit at all.
+GATED=""
+git add -u 2>/dev/null || true
+git add discussion 2>/dev/null || true   # rounds, claims, decisions
+git add data 2>/dev/null || true          # published aggregates
+# --- privacy check (F6): nothing staged may carry personal data; fail-closed ----------------
+if ! python3 bin/privacy-staged; then
+  echo "bin/sync: the privacy check refused this commit. Nothing was committed or pushed." >&2
+  exit 1
+fi
+set +e
+python3 bin/gate-independence --staged --quarantine
+GATE_RC=$?
+set -e
+case "$GATE_RC" in
+  0) ;;
+  10)
+    GATED="yes"
+    echo "" >&2
+    echo "The round(s) above were quarantined, not committed as rounds. This is the independence" >&2
+    echo "requirement working, not a failure of the harness: re-run the brief on a model that is" >&2
+    echo "not already on that claim. Do not re-file the same round under a different label." >&2
+    echo "" >&2
+    ;;
+  *)
+    echo "" >&2
+    echo "bin/sync: the independence gate refused this commit or could not run (exit $GATE_RC)." >&2
+    echo "Nothing was committed or pushed. Fix what it names above, then run bin/sync again." >&2
+    exit 1
+    ;;
+esac
+# Re-stage and re-check: after quarantine the commit must gate clean, or it does not happen.
+git add -u 2>/dev/null || true
+git add discussion 2>/dev/null || true   # rounds, claims, decisions
+git add data 2>/dev/null || true          # published aggregates
+if ! python3 bin/gate-independence --staged >/dev/null; then
+  echo "bin/sync: the commit still does not pass the independence gate after quarantine." >&2
+  echo "Nothing was committed or pushed." >&2
+  exit 1
+fi
+
+python3 bin/reindex
+
+if [ -z "$(git status --porcelain)" ]; then
+  echo "nothing to sync"
+  exit 0
+fi
+
+# Derive the default message in plain statements. A $(...) nested inside ${1:-...}, with its own
+# quotes and a line continuation, is a PARSE error in macOS /bin/sh (bash 3.2 in sh mode): it failed
+# with "bad substitution" and took the whole nightly publish with it, even though publish-data passes
+# $1 explicitly - the shell parses the expansion whether or not the default is needed.
+MSG="$1"
+if [ -z "$MSG" ]; then
+  # $NF, not $2: a rename status line has three fields and would otherwise yield "->".
+  TARGET=$(git status --porcelain | awk '{print $NF}' \
+           | sed -n 's|^discussion/claims/\([^/]*\)/.*|\1|p' | head -1)
+  if [ -n "$TARGET" ]; then
+    MSG="discussion: round on $TARGET"
+  else
+    # Nothing under discussion/claims changed. Say so, rather than the old sed's fallthrough, which
+    # printed the literal "discussion: round on discussion" over and over in the history.
+    MSG="discussion: housekeeping"
+  fi
+fi
+if [ -n "$GATED" ]; then
+  MSG="gate: quarantined a self-reviewed round ($MSG)"
+fi
+git add -u 2>/dev/null || true
+git add discussion 2>/dev/null || true   # rounds, claims, decisions
+git add data 2>/dev/null || true          # published aggregates
+git commit -q -m "${MSG:-discussion: round}" -m "Agent: ${ZIPBIZ_AGENT:-unknown} on $(hostname)"
+
+n=0
+while [ $n -lt 3 ]; do
+  if git pull --rebase --quiet origin "$BRANCH" && git push --quiet origin "$BRANCH"; then
+    echo "synced to origin/$BRANCH"
+    exit 0
+  fi
+  n=$((n + 1))
+  echo "push race (attempt $n/3), retrying in 5s"
+  sleep 5
+done
+echo "could not sync after 3 attempts. Do NOT force-push." >&2
+echo "Another agent is likely mid-push. Wait, then run bin/sync again." >&2
+exit 1

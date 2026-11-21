@@ -1,0 +1,93 @@
+#!/bin/sh
+# Schedule a nightly circle of discussion on THIS machine, from THIS clone.
+#
+#   bin/install-schedule 05:00          8 rounds a night at 05:00
+#   bin/install-schedule 05:00 12       12 rounds
+#   bin/install-schedule --remove
+#
+# macOS installs a launchd agent; it runs on wake if the machine was asleep at the time, and on next
+# login if it was shut down. Linux prints the crontab line rather than editing your crontab behind you.
+set -e
+REPO="$(cd "$(dirname "$0")/.." && pwd)"
+LABEL=com.nflinventory.discussion
+PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
+
+if [ "$1" = "--remove" ]; then
+  if [ -f "$PLIST" ]; then
+    launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || launchctl unload "$PLIST" 2>/dev/null || true
+    rm -f "$PLIST"
+    echo "removed $PLIST"
+  else
+    echo "nothing installed at $PLIST"
+  fi
+  exit 0
+fi
+
+TIME="${1:-05:00}"
+ROUNDS="${2:-8}"
+case "$TIME" in
+  [0-9][0-9]:[0-9][0-9]) ;;
+  *) echo "usage: bin/install-schedule HH:MM [max_rounds]" >&2; exit 1 ;;
+esac
+H=$(echo "$TIME" | cut -d: -f1 | sed 's/^0//'); H=${H:-0}
+M=$(echo "$TIME" | cut -d: -f2 | sed 's/^0//'); M=${M:-0}
+AGENT="${ZIPBIZ_AGENT:-$(hostname -s | tr -cd '[:alnum:]' | cut -c1-12)}"
+# The command that runs one round. Default assumes Claude Code; a different harness needs an adapter
+# script on disk rather than an inline command - nested quoting inside a plist or crontab is what
+# breaks first. See bin/hermes-round.sh.example.
+CMD="${ZIPBIZ_AGENT_CMD:-claude -p}"
+
+if [ "$(uname)" != "Darwin" ]; then
+  echo "Not macOS. Add this to your crontab (crontab -e):"
+  echo
+  echo "$M $H * * *  cd $REPO && ZIPBIZ_AGENT=$AGENT ZIPBIZ_AGENT_CMD='$CMD' bin/overnight $ROUNDS >> /tmp/nflinventory-$AGENT.log 2>&1"
+  echo
+  echo "Note the log goes to /tmp, deliberately: a log path inside the repo gets committed by"
+  echo "bin/sync and then two machines appending to the same file conflict on every rebase."
+  echo
+  echo "Or as a systemd timer, if you prefer it to survive a machine that was asleep."
+  exit 0
+fi
+
+mkdir -p "$HOME/Library/LaunchAgents" "$REPO/discussion/rounds"
+cat > "$PLIST" <<PL
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>$LABEL</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/sh</string><string>-lc</string>
+    <string>cd '$REPO' && exec bin/overnight $ROUNDS</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>ZIPBIZ_AGENT</key><string>$AGENT</string>
+    <key>ZIPBIZ_AGENT_CMD</key><string>$CMD</string>
+  </dict>
+  <!-- every night at $TIME; if the machine is asleep then, it runs as soon as it wakes -->
+  <key>StartCalendarInterval</key>
+  <dict><key>Hour</key><integer>$H</integer><key>Minute</key><integer>$M</integer></dict>
+  <!-- outside the repo on purpose: a log inside it gets committed, and two machines appending to
+       one committed file conflict on every rebase -->
+  <key>StandardOutPath</key><string>/tmp/nflinventory-$AGENT.log</string>
+  <key>StandardErrorPath</key><string>/tmp/nflinventory-$AGENT.log</string>
+  <key>ProcessType</key><string>Background</string>
+</dict>
+</plist>
+PL
+
+launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
+launchctl bootstrap "gui/$(id -u)" "$PLIST" 2>/dev/null || launchctl load "$PLIST"
+echo "installed: $LABEL — $ROUNDS rounds nightly at $TIME, from $REPO"
+echo "  agent id : $AGENT"
+echo "  round cmd: $CMD"
+echo "  log      : /tmp/nflinventory-$AGENT.log  (outside the repo, so it cannot cause merge conflicts)"
+echo "  verify   : launchctl print gui/$(id -u)/$LABEL | head -20"
+echo "  run now  : launchctl kickstart -k gui/$(id -u)/$LABEL"
+echo "  remove   : bin/install-schedule --remove"
+echo
+echo "Check it can reach your agent first:"
+echo "  cd $REPO && ZIPBIZ_AGENT_CMD='$CMD' bin/overnight 1"

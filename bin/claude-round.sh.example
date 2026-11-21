@@ -1,0 +1,7 @@
+#!/bin/sh
+# Adapter for claude. Copy to bin/claude-round.sh, edit the last line, chmod +x, and name it in
+# discussion/roster. The brief arrives on stdin; everything the agent needs is in it.
+set -e
+BRIEF="$(cat)"
+# Claude Code reads the prompt from stdin with -p, so no shim is strictly needed:
+printf '%s' "$BRIEF" | exec claude -p

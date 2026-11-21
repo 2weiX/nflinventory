@@ -1,0 +1,402 @@
+#!/usr/bin/env python3
+"""Print the next task brief for one round, or IDLE. No arguments, no state, no network.
+
+Picks work by the claim lifecycle in AGENTS.md: a claim that needs research, then one that needs
+challenging, then one that needs adjudication. Oldest first, so nothing starves.
+"""
+import os
+import random
+import re
+import sys
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CLAIMS = os.path.join(ROOT, "discussion", "claims")
+
+
+def frontmatter(path):
+    try:
+        text = open(path, encoding="utf-8").read()
+    except OSError:
+        return {}
+    m = re.match(r"\s*---\n(.*?)\n---", text, re.S)
+    if not m:
+        return {}
+    out = {}
+    for line in m.group(1).splitlines():
+        if ":" in line and not line.startswith((" ", "-", "#")):
+            k, _, v = line.partition(":")
+            out[k.strip()] = v.strip().strip('"\'')
+    return out
+
+
+# Reuse the gate's normalizer and roster parser. Two independent copies of "are these the same
+# model?" would drift apart, and the half that drifts is the half that lets self-review through.
+try:
+    from importlib.machinery import SourceFileLoader
+    _gate = SourceFileLoader("_gate", os.path.join(ROOT, "bin", "gate-independence")).load_module()
+    canonical, declared = _gate.canonical, _gate.declared
+except Exception:
+    def canonical(x):
+        return (x or "").strip().lower()
+
+    def declared():
+        return {}
+
+
+def role_model(role):
+    """The model the roster says will run this role, canonical form, or '' if undeclared."""
+    try:
+        text = open(os.path.join(ROOT, "discussion", "roster"), encoding="utf-8").read()
+    except OSError:
+        return ""
+    for line in text.splitlines():
+        line = line.split("#")[0].strip()
+        m = re.match(r"^%s\s*:\s*(\S+)(.*)$" % re.escape(role), line)
+        if m:
+            mm = re.search(r"model\s*=\s*(\S+)", m.group(2) or "")
+            return canonical(mm.group(1)) if mm else ""
+    return ""
+
+
+def models_on(d):
+    """Canonical models of every round already filed on this claim."""
+    out = set()
+    for r in rounds(d):
+        c = canonical(frontmatter(os.path.join(d, r)).get("model"))
+        if c:
+            out.add(c)
+    return out
+
+
+BOUNDARY = re.compile(r"^r\d+-(?:settle|drift|reopen|unfillable)-")
+
+
+def cycle_models(d):
+    """Models of the current cycle: rounds after the most recent checking round.
+    The owner's ruling (2026-11-08): a finished cycle no longer bars later roles."""
+    rs = rounds(d)
+    start = 0
+    for i, r in enumerate(rs):
+        if BOUNDARY.match(r):
+            start = i + 1
+    out = set()
+    for r in rs[start:]:
+        c = canonical(frontmatter(os.path.join(d, r)).get("model") or "")
+        if c:
+            out.add(c)
+    return out
+
+
+def last_model(d):
+    """Canonical model of the claim's most recent round ('' if none)."""
+    rs = rounds(d)
+    if not rs:
+        return ""
+    r = max(rs, key=lambda f: int(re.match(r"r(\d+)-", f).group(1)))
+    return canonical(frontmatter(os.path.join(d, r)).get("model") or "")
+
+
+def role_command(role):
+    """The command the roster runs for this role, or '' if undeclared."""
+    try:
+        text = open(os.path.join(ROOT, "discussion", "roster"), encoding="utf-8").read()
+    except OSError:
+        return ""
+    for line in text.splitlines():
+        line = line.split("#")[0].strip()
+        m = re.match(r"^%s\s*:\s*(\S+)(.*)$" % re.escape(role), line)
+        if m:
+            return m.group(1)
+    return ""
+
+
+ROTATION = ("challenger", "researcher", "proposer", "adjudicator")
+
+
+def rotate_for(d):
+    """Round-robin choice for a settle/drift round: a roster (command, canonical model)
+    that did not write the claim's most recent round. Fixed order for determinism."""
+    lastm = last_model(d)
+    for role in ROTATION:
+        cmd, mdl = role_command(role), role_model(role)
+        if cmd and mdl and mdl != lastm:
+            return cmd, mdl, lastm
+    return "", "", lastm
+
+
+def rounds(d):
+    return sorted(f for f in os.listdir(d) if re.match(r"r\d+-", f))
+
+
+def budget():
+    p = os.path.join(ROOT, "discussion", "budget.yml")
+    b = {"max_claims_in_flight": 6}
+    if os.path.exists(p):
+        for line in open(p, encoding="utf-8"):
+            if ":" in line and not line.startswith("#"):
+                k, _, v = line.partition(":")
+                v = v.strip()
+                if v.isdigit():
+                    b[k.strip()] = int(v)
+    return b
+
+
+BRIEF = {
+ "researched": ("researcher", """Gather the evidence for this claim. {prior}
+
+Label every figure with its date, the population it refers to, its sample size and a source link. Flag any
+source with a commercial interest in the answer. Where the evidence does not exist, say so plainly and stop
+looking - an explicit gap is a finding, a plausible invention is damage.
+
+Write your work to:  {path}/r{n:02d}-research--{tag}.md
+Use the round frontmatter in AGENTS.md. Then run bin/sync."""),
+ "challenged": ("challenger", """Argue AGAINST this claim as hard as the sources allow.
+
+You sign three commitments (AGENTS.md):
+  1. CONCEDE explicitly - list what you could not dispute. A challenge with no concessions is noise.
+  2. RATE every objection strong / moderate / weak. An overstated objection costs more than a concession.
+  3. Say what evidence would SETTLE each point. If you cannot name it, you have a preference, not an objection.
+
+Read the existing rounds in that directory first, and do not re-run research that is already there.
+
+{prior}
+
+Write your work to:  {path}/r{n:02d}-challenge--{tag}.md
+Then run bin/sync."""),
+ "adjudicated": ("adjudicator", """Resolve this claim.
+
+{prior}
+
+RECOMPUTE the challenger's numbers - challenges are often right in direction and wrong in arithmetic.
+Set verdict to upheld / weakened / refuted / open with the reason. Say plainly if BOTH sides were wrong,
+including the side this repo already acted on. Where the evidence genuinely conflicts, leave the
+contradiction labelled and unresolved rather than picking a winner to look decisive.
+
+Weigh a same-model challenge lower than an independent one, and say so.
+
+Write your work to:  {path}/r{n:02d}-verdict--{tag}.md
+Then update {path}/claim.md frontmatter (status, verdict, round, confidence) and run bin/sync."""),
+  "settle": ("adjudicator", """{prior}
+This claim already has a verdict. Close it or reopen it - do not re-argue it.
+
+Read claim.md and the rounds. Then do exactly one of:
+
+  SETTLE    - set status: settled in {path}/claim.md. Do this unless the falsifier has been met.
+  REOPEN    - only if the claim's own falsifier has actually been met by new evidence. Say which
+              evidence, and set status: open with the round counter continued.
+  UNFILLABLE- if the falsifier names evidence that does not exist in public sources.
+
+Re-litigating a claim whose falsifier has not been met is the failure mode this protocol exists to
+prevent. If you find yourself wanting to argue it again, write down which evidence changed instead.
+Then run bin/sync."""),
+}
+NEEDS = {"open": "researched", "researched": "challenged", "challenged": "adjudicated",
+         "adjudicated": "settle"}
+# work priority: a claim nobody has examined beats one that already carries a verdict
+PRIORITY = {"open": 0, "researched": 1, "challenged": 2, "adjudicated": 3}
+
+
+def drifted():
+    """Internal claims pinned to a data version that is no longer current."""
+    import glob as _g
+    cur = set()
+    for f in _g.glob(os.path.join(ROOT, "data", "aggregates_*.json")):
+        try:
+            import json as _j
+            v = _j.load(open(f, encoding="utf-8")).get("version")
+            if v:
+                cur.add(v)
+        except Exception:
+            pass
+    if not cur:
+        return []
+    out = []
+    for name in sorted(os.listdir(CLAIMS)):
+        fm = frontmatter(os.path.join(CLAIMS, name, "claim.md"))
+        if fm.get("kind") == "internal" and fm.get("data_version") and fm["data_version"] not in cur:
+            out.append((name, fm))
+    return out
+
+
+def main():
+    if not os.path.isdir(CLAIMS):
+        print("IDLE  (no discussion/claims directory yet)")
+        return
+    inbox = os.path.join(ROOT, "discussion", "inbox.md")
+    if os.path.exists(inbox):
+        body = open(inbox, encoding="utf-8").read().split("## Open items", 1)[-1]
+        items = [b for b in re.split(r"^### ", body, flags=re.M)[1:] if b.strip()]
+        if items:
+            print(f"TASK  inbox   role=proposer   ({len(items)} item(s) waiting)\n")
+            print("Someone has added questions or new evidence. Drain the inbox before anything else.\n")
+            for i, it in enumerate(items, 1):
+                head = [l for l in it.splitlines() if l.strip()][:3]
+                print(f"  {i}. " + " / ".join(h.strip()[:88] for h in head))
+            print("""
+For each item:
+  question   -> bin/claim "<title>" "<falsifier>", then fill in why it matters
+  evidence   -> file it under discussion/archive/ with its provenance, and for each claim it
+                affects, check it against that claim's falsifier. If the falsifier is met, set
+                status: open and say which evidence met it. This is the only legitimate route
+                back into a settled claim.
+  correction -> same as evidence: name the claim and what changed
+
+Then remove the item from inbox.md, leaving one line under it saying where it went, and bin/sync.""")
+            return
+    dr = drifted()
+    if dr:
+        name, fm = dr[0]
+        cmd, mdl, lastm = rotate_for(os.path.join(CLAIMS, name))
+        print(f"TASK  {name}   role=adjudicator  (DATA DRIFT)")
+        if cmd:
+            print(f"DISPATCH {cmd}   # round-robin: {mdl} re-pins; "
+                  f"{lastm or '(no prior round)'} wrote the last round")
+        print(f"CLAIM {fm.get('title','')}")
+        print(f"STATUS {fm.get('status')}  pinned to data_version {fm.get('data_version')}, "
+              f"which is no longer current\n")
+        print("""This claim is about our own dataset and the numbers under it have moved. Run `bin/drift`
+to see what changed, and `bin/drift --history` for the trajectory.
+
+Decide whether the verdict survives the new data. If it does, re-pin: update data_version in
+claim.md to the current version and say in a round file why the conclusion holds. If it does not,
+set status back to open and say which number moved and by how much.
+
+The trajectory is itself evidence. A gap rate that falls as lookups accumulate is partial
+confirmation that the original rate was measuring our search failure rather than the market.
+Then run bin/sync.""")
+        if len(dr) > 1:
+            print(f"\n({len(dr) - 1} further drifted claim(s) queued behind this one.)")
+        return
+    work, blocked_claims = [], []
+    in_flight = 0
+    for name in sorted(os.listdir(CLAIMS)):
+        d = os.path.join(CLAIMS, name)
+        if not os.path.isdir(d):
+            continue
+        fm = frontmatter(os.path.join(d, "claim.md"))
+        status = fm.get("status", "open")
+        if status in ("settled", "unfillable"):
+            continue
+        blocked = fm.get("blocked_on", "")
+        if blocked and not os.path.exists(os.path.join(ROOT, blocked)):
+            blocked_claims.append((name, blocked))
+            continue
+        in_flight += 1
+        rs = rounds(d)
+        eff = max(len(rs), int(fm.get("round", 0) or 0))
+        roles = "".join(rs)
+        if "verdict" in roles:
+            want = "settle"
+        elif "challenge" in roles:
+            want = "adjudicated"
+        elif "research" in roles:
+            want = "challenged"
+        else:
+            want = NEEDS.get(status, "researched")
+        verdicts = len([r for r in rs if "verdict" in r or "drift" in r or "adjudic" in r])
+        # A claim waiting on WORK is not stalled, it is queued. The stall rule exists to stop an
+        # argument going round forever; applying it to a claim whose `needs:` names an unrun
+        # measurement or an unwritten export closes it for the wrong reason. C019 was closed exactly
+        # that way on 2026-11-08: its own body records TWO rounds explicitly declining the
+        # instruction, and the frontmatter said `unfillable` anyway. A caveat in the message was not
+        # enough, because the message still leads with "set status: unfillable". So the exemption is
+        # structural now, not advisory.
+        waiting_on_work = (fm.get("needs") or "").strip() in ("pipeline-data", "measurement")
+        if verdicts >= 3 and status == "open" and not waiting_on_work:
+            print(f"STALLED  {name}\n\nThree full cycles have ended without resolving this. Per "
+                  f"AGENTS.md, set status: unfillable in {d}/claim.md and record what evidence would "
+                  f"be needed.\n\nOnly do this if the evidence genuinely does not exist. A claim that "
+                  f"stays 'open' because the right measurement has not been taken yet is NOT "
+                  f"unfillable - leave it open and make sure its `needs:` field says what would "
+                  f"settle it.\nThen run bin/sync.")
+            return
+        work.append((PRIORITY.get(status, 9), eff, name, d, fm, want))
+    for name, b in blocked_claims:
+        print(f"BLOCKED  {name}  needs {b} - skipped\n")
+    if not work:
+        print("IDLE  (every claim is settled or unfillable)\n\n"
+              "Stop here. Do not invent claims to stay busy. The argument is finished; what remains "
+              "needs evidence from outside it, listed below.")
+        os.system(f"python3 {os.path.join(ROOT, 'bin', 'backlog')}")
+        return
+    b = budget()
+    if in_flight > b["max_claims_in_flight"]:
+        print(f"NOTE  {in_flight} claims in flight, budget allows {b['max_claims_in_flight']}. "
+              f"Finish open claims before proposing more.\n")
+    work.sort()
+
+    # A round that checks an argument its own model made is refused at sync time, so do not hand it
+    # out in the first place: a brief that cannot be filled is a wasted agent and a confusing log.
+    # Skip to the next claim instead, and say what the roster would have to change to unblock it.
+    chosen, skipped, dispatch = None, [], ""
+    for item in work:
+        _, _, name, d, fm, want = item
+        role = BRIEF[want][0]
+        if want in ("settle", "drift"):
+            # boundary stages rotate instead of skipping: any roster model that did not
+            # write the immediately preceding round satisfies the round-robin rule
+            cmd, mdl, lastm = rotate_for(d)
+            if cmd:
+                dispatch = (f"DISPATCH {cmd}   # round-robin: {mdl} settles; "
+                            f"{lastm or '(no prior round)'} wrote the last round")
+            else:
+                names = declared()
+                mine = role_model("adjudicator")
+                skipped.append((name, role, names.get(mine, mine) if mine else "(no model)"))
+                continue
+        elif role in ("challenger", "adjudicator"):
+            mine, used = role_model(role), cycle_models(d)
+            if mine and mine in used:
+                names = declared()
+                skipped.append((name, role, names.get(mine, mine)))
+                continue
+        chosen = item
+        break
+    for nm, rl, mdl in skipped:
+        print(f"SKIPPED  {nm}  needs a {rl}, but the roster runs {mdl} for that role and {mdl} is\n"
+              f"         already on the claim. Declare a different model for {rl} in\n"
+              f"         discussion/roster, or fill this round by hand from another machine.\n")
+    if chosen is None:
+        print("BLOCKED  every claim that needs work needs it from a model that already argued there.\n\n"
+              "This is the independence requirement doing its job, not a bug. The roster has run out\n"
+              "of distinct models for the roles still outstanding. Add one to discussion/roster - a\n"
+              "fourth adapter is a two-line file, see bin/*-round.sh.example - and run bin/next again.\n"
+              "Do NOT work around this by filing the round under a different label.")
+        return
+    _, _, name, d, fm, want = chosen
+    role, brief = BRIEF[want]
+    n = len(rounds(d)) + 1
+    prior_models = []
+    for r in rounds(d):
+        fm2 = frontmatter(os.path.join(d, r))
+        if fm2.get("model"):
+            prior_models.append(f"{r.split('--')[0]} = {fm2['model']}")
+    prior = ("MODELS ALREADY ON THIS CLAIM: " + "; ".join(prior_models) + """
+
+REQUIREMENT, not a preference: your model must not have written the round directly before this
+one (round-robin - at least one different model in between), and within the current cycle (the
+rounds since the last settle, drift, reopen or unfillable) a challenger must not be the
+researcher's model and an adjudicator must not be either. A model from a FINISHED cycle may
+write here again. If the rule collides, STOP. Do not write the round, do not write it with a
+caveat, and do not soften the conclusion to compensate - a model cannot check an argument it
+just made, and a round that tries is refused by bin/gate-independence when bin/sync runs.
+Write nothing, say which model you are and which round it collides with, and exit non-zero so
+the harness moves on. That is a correct and useful outcome; a tentative self-review is not.
+
+Name your model in `model:` exactly as discussion/roster declares it, and put the harness that ran
+you in `harness:` - not in `model:`, and not in the filename after `--`, which is also the model.
+An undeclared label is refused too: the gate will not guess whether it is a new model or a nickname
+for one already here."""
+             ) if prior_models else "No prior rounds carry a model field."
+    tag = os.environ.get("ZIPBIZ_AGENT") or f"agent{random.randint(100, 999)}"
+    print(f"TASK  {name}   role={role}  round={n}")
+    if dispatch:
+        print(dispatch)
+    print(f"CLAIM {fm.get('title', '(untitled)')}")
+    print(f"STATUS {fm.get('status', 'open')}  falsifier: {fm.get('falsifier', '(none set - write one)')}")
+    print()
+    print(brief.format(path=os.path.relpath(d, ROOT), n=n, tag=tag, prior=prior))
+
+
+if __name__ == "__main__":
+    main()
