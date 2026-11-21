@@ -13,6 +13,10 @@ It replaces the old Google Sheets.
 - **Import:** upload an `.xlsx` or `.csv`, or paste a Google Sheets link. Columns are matched automatically; you check them, preview, then import. Past imports can be undone.
 - **Coming next:** one-click eBay drafts through the eBay API, once the developer keys are approved.
 
+## For agents and contributors
+
+Read `AGENTS.md`, then `docs/STORIES.md` (user stories, acceptance criteria and the QA Definition of Done) and `docs/HANDOFF.md`.
+
 ## Set up (once)
 
 1. **Supabase:** the database schema is in `supabase/migrations/0001_init.sql` and is already applied to the `nflinventory` project.

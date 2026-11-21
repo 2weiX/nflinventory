@@ -1,57 +1,85 @@
-# Agent protocol
+# Working on this repo (for AI agents)
 
-You are one of several agents working on this repository, probably from a different machine than the
-others, probably not at the same time. This file is the whole coordination mechanism. There is no server,
-no queue and no orchestrator — just git, a directory convention, and the rules below.
+Several agents work here in turns, often overnight, with no human watching. Two protocols share this
+repo: **story development** (code agents building features) and the **overnight discussion loop**
+(agents arguing in `discussion/` about what the stories should be). These rules keep every turn safe
+and make it easy for the next agent to pick up.
 
-Read this file, run `bin/next`, do the one task it gives you, write one file, run `bin/sync`. That is a round.
+## Start of every turn (story development)
+1. Read `docs/HANDOFF.md` (most recent entry first), then `docs/STORIES.md`.
+2. `git pull`. Run `npm install`, `npm test`, `npm run typecheck`. If main is broken, fixing it **is** your task.
+3. Pick **one** story: the highest priority that isn't Done and isn't ⏳ Blocked. Don't start a second story in the same turn.
 
-## The hard rule: two trees, never mixed
+## While working
+- Branch: `story/S7-mcp-endpoint` style. One pull request per story; small commits.
+- Keep the stack: Next.js 16 (App Router), Supabase, Tailwind 4, TypeScript strict. No new UI framework or ORM.
+  Next.js 16 differs from older versions: check `node_modules/next/dist/docs/` before using an API you're unsure of.
+- Money is always integer cents in the database and in `lib/`. Convert to and from dollars only at the edges (UI, MCP arguments and results).
+- Pure logic goes in `lib/` with tests in `lib/*.test.ts` (run with `node --test`, no extra test framework).
+- Schema changes: add `supabase/migrations/000N_name.sql` (never edit an applied migration), apply it to the project, and enable row-level security on new tables.
+- Never put secrets in the repo, in `NEXT_PUBLIC_*` variables or in client code. The repo is **public**.
+- Never delete or bulk-rewrite real data in the database. Tests use rolled-back transactions or a throwaway user that you delete afterwards.
+- Never publish anything to eBay or Whatnot, never buy, bid or message anyone. eBay integration creates drafts only.
 
-| Tree | Holds | Who writes it |
-|---|---|---|
-| `discussion/` | claims, evidence, challenges, verdicts, decisions | discussion agents |
-| app code (`app/`, `components/`, `lib/`, `supabase/`) | the inventory application | code agents, via claims that decide it |
+## Done means
+Everything in "QA: Definition of Done" in `docs/STORIES.md`. If you can't finish, leave the branch in a state
+where the checks pass, and say exactly what's left.
 
-A discussion agent never edits app code. A code change follows only from a claim that reached a verdict
-pointing at it. This separation is what lets three models argue about what to build without any of them
-silently building the thing they argued for.
+## End of every turn
+Add an entry at the **top** of `docs/HANDOFF.md`:
 
-## The round
+```
+## YYYY-MM-DD HH:MM · <agent name> · S<n> <title>
+Status: Done | In progress | Blocked
+Branch / PR:
+What changed:
+Evidence (tests, build, manual checks):
+Open issues / next step:
+Anything Dennis must do (keys, settings, decisions):
+```
 
-1. `bin/next` — hands you one task: research a claim, challenge it, adjudicate it, or survey.
-2. Do exactly that task. Write exactly one file under `discussion/`.
-3. `bin/sync` — stages, runs the independence gate (`bin/gate-independence`: no challenger or
-   adjudicator round whose model already appears earlier on the same claim), commits, pushes.
-   Fail-closed: if the gate refuses, the round does not enter the tree.
+Questions for Dennis go under "Anything Dennis must do". Don't stall waiting for an answer: pick the safest
+reasonable reading, note it, and move on.
 
-## Independence (required)
+## The overnight discussion loop (separate protocol, same repo)
 
-`discussion/roster` declares the role → command → model map. A challenger must not share a model with the
-researcher it challenges; an adjudicator must not share one with either. A round whose attribution names a
-model already on the claim is refused, not re-tried with a better story. The round frontmatter's `model:`
-field is binding — the dispatching adapter writes it, the agent never edits it.
+`bin/` carries the claim-debate loop (the proven zipbiz machinery): several models argue in `discussion/`
+about what the stories should be. Its rules:
 
-## Cost posture
+- **Two trees, never mixed.** `discussion/` holds claims, rounds and verdicts. A discussion agent never
+  edits app code, `docs/STORIES.md` or the database. A code change follows only from a claim that reached
+  a verdict — the verdict's evidence is what proposes a story change (as a round under the claim, applied
+  to `docs/STORIES.md` by a story agent or Dennis).
+- **Independence is required.** `discussion/roster` declares role → command → model. The gate
+  (`bin/gate-independence`, run inside `bin/sync`) refuses any challenger or adjudicator round whose model
+  already appears earlier on the same claim. Attribution is binding, written by the dispatching adapter;
+  a model never writes its own `model:` field.
+- **The Supabase rule.** The live inventory database holds real personal data. Discussion agents never
+  touch it — no credentials in the repo or in agent prompts. Schema proposals are migration files under
+  decided claims, applied by story agents under the migration rules above.
+- **Cost posture.** The loop runs overnight at minimal cost: research/proposal on GLM-5.3-flash (pennies),
+  challenge on numes' $0 `:free` tier, adjudication on the Claude subscription. No paid OpenRouter models.
+  The challenger seat must always point at a `:free` id — numes moved its free tier behind a suffix once
+  already; re-check the provider catalog on every swap.
+- **The loop stops, never spins.** `bin/overnight` stops on IDLE, on budget, or on a sync failure. A round
+  that produces no file stops the circle before sync. The loop's crontab runs offset from other overnight
+  loops so two never share a window.
 
-This repo runs overnight at minimal cost. The roster's seats: research/proposal on GLM-5.3-flash
-(pennies), challenge on numes' $0 `:free` tier, adjudication on the Claude subscription (no metering).
-Paid OpenRouter models are not on this roster. The challenger seat must always point at a `:free` id —
-numes moved its free tier behind a suffix once already; re-check the catalog on every swap.
-
-## The Supabase rule
-
-The app's live database (the `nflinventory` Supabase project) holds real personal inventory data.
-Discussion agents NEVER touch it. Schema changes happen as migration files in `supabase/migrations/`,
-proposed in a claim, applied by the owner (or a code agent under a decided claim) — never by a
-discussion agent, never from a discussion round. No Supabase credentials belong in this repo or in
-agent prompts.
-
-## Conventions
-
-- Claim ids: `C001`, `C002`, ... (`bin/claim "title" "falsifier"` scaffolds one).
-- Round files: `discussion/claims/<id>/r<N>-<role>.md` with binding frontmatter
-  (`model:`, `role:`). The adapter writes `model:`; tampering with it is the one sin the gate exists to catch.
-- One owner per file: a round file is written once by the agent that dispatched it and never edited again.
-- The overnight loop (`bin/overnight`) stops on IDLE, on budget, or on a sync failure — never spins.
-  A round that produces no file stops the circle before sync; no housekeeping commits.
+## Project facts
+- Supabase project `nflinventory`, ref `ngxfvhlbrhlqarpwavcf` (eu-west-1). Publishable key and URL are in `.env.example`.
+- Hosting: Vercel (project imported from `2weiX/nflinventory`, branch `main`).
+- Dennis's own MCP "football" (sets, checklists, odds, box prices, card prices) runs on his Hermes harness
+  at `dennis.taila812b8.ts.net/cc/mcp` (funnel) and `127.0.0.1:8742/mcp` locally. Caps: 20 requests/minute
+  per token, 30 s statement timeout, read-only (SELECT-only role). It serves, as of 2026-11-20: Flagship 2026
+  (43,770 variants), Chrome 2026 (25,091 variants, 15,162 numbered runs, 2,603 official odds rates across
+  8 box formats), Chrome 2025, Midnight 2026, Inception 2024+2026, Heritage 2026, Donruss/Optic 2022-2025,
+  1990 Panini Score. For S8 (value refresh) Claude combines it with this app's MCP. For S16 (board pricing)
+  the **harness** scrapes and prices boards hourly and pushes them to this app's ingest endpoint. The app
+  never scrapes Whatnot and never re-implements the pricing model.
+- Break market data: `2weiX/breakdata` on GitHub - Whatnot football boards hand-classified (breaks.csv with
+  seller/product/mechanic/prices, per-board spot CSVs, daily scans). S16's harness side reads it; its schema
+  is the source of the ingest payload's fields.
+- The football MCP's sealed-box cost basis (EU shops, `v_box_basis`) can supply S16's `box_cost_cents`
+  per product and format.
+- Whatnot is **read-only** for this app: read boards, never click buy/bid/spot buttons, never place pre-bids.
+- eBay developer account: approval pending (registered 2026-11-21). S11 and S12 stay blocked until keys exist.
