@@ -1,0 +1,92 @@
+[21:48] round 1/2  role=researcher  via bin/hermes-round.sh
+TASK  C001-first-circle-survey-the-nflinventory-app   role=researcher  round=1
+CLAIM First circle: survey the nflinventory app and file a claim backlog
+STATUS open  falsifier: The survey itself, cross-checked against the README and the running app - any claim it files is re-verified by the challenger against the actual code
+hermes: a source update could not be finished automatically (6 attempts); run `hermes update` from a shell to finish it
+hermes: a source update is unfinished; run `hermes update` from a shell to finish it
+Query: Read AGENTS.md, then carry out exactly this one task and write the one 
+file it names.
+
+TASK  C001-first-circle-survey-the-nflinventory-app   role=researcher  round=1
+CLAIM First circle: survey the nflinventory app and file a claim backlog
+STATUS open  falsifier: The survey itself, cross-checked against the README and 
+the running app - any claim it files is re-verified by the challenger against 
+the actual code
+
+Gather the evidence for this claim. No prior rounds carry a model field.
+
+Label every figure with its date, the population it refers to, its sample size 
+and a source link. Flag any
+source with a commercial interest in the answer. Where the evidence does not 
+exist, say so plainly and stop
+looking - an explicit gap is a finding, a plausible invention is damage.
+
+Write your work to:  
+discussion/claims/C001-first-circle-survey-the-nflinventory-app/r01-research--ha
+rness-nflinv.md
+Use the round frontmatter in AGENTS.md. Then run bin/sync.
+
+────────────────────────────────────────
+Let me start by reading AGENTS.md and the handoff as required.
+∴ Thought for 0s
+────────────────────────────────────────
+
+📖 Read AGENTS.md
+📖 Read HANDOFF.md  0.1s
+
+────────────────────────────────────────
+This is the discussion loop protocol, not story development. I'm a researcher for
+ claim C001. I need to:
+
+1. Survey the nflinventory app
+2. File a claim backlog (list of claims to be filed under discussion/)
+3. Write to discussion/claims/C001-first-circle-survey-the-nflinventory-app/r01-research--harness-n
+flinv.md
+4. Use the round frontmatter in AGENTS.md — but AGENTS.md doesn't show round frontmatter... Let
+ me check the discussion/ directory structure and maybe bin/ scripts to understand
+ the format expected. There might be existing claims in discussion/ from other repos (zipbiz machinery
+). Let me look at discussion/ and bin/sync, and maybe a roster file.
+
+Let me explore the repo.
+∴ Thought for 1s · This is the discussion loop protocol, not story development.
+────────────────────────────────────────
+
+────────────────────────────────────────
+☤ Hermes
+This is a discussion-loop task, not story development. Let me look at the discussion tree and the bin machinery to learn the round format.
+────────────────────────────────────────
+
+💻 $ ls /home/dennis/nflinventory/discussion/ 2>/dev/null + 3 commands  0.1s
+
+────────────────────────────────────────
+Let me look at the C001 claim directory, the existing claim file, and the round front
+matter format. AGENTS.md doesn't actually contain a "round frontmatter" section —
+ but maybe bin/sync or bin/rounds define it. Let me check the claim directory contents
+, discussion/inbox.md, discussion/index.md, budget.yml, and bin/sync + bin/next.
+∴ Thought for 0s · Let me look at the C001 claim directory, the existing claim file, and t…
+────────────────────────────────────────
+
+✗ $ ls -la /home/dennis/nflinventory/discussion/claims/C001-first-circle-survey-the-nflinventory-app/ + 3 commands  0.2s [exit 1]
+
+────────────────────────────────────────
+Now I need the round frontmatter format. AGENTS.md doesn't literally contain round frontmatter
+ — but the task says "Use the round frontmatter in AGENTS.md." Maybe it's in bin/round
+s or an example. Let me check bin/next, bin/sync, discussion/inbox.md, discussion
+/index.md, budget.yml, and the round scripts (hermes-round.sh.example) plus any archive rounds for
+ format.
+∴ Thought for 1s · Now I need the round frontmatter format.
+────────────────────────────────────────
+
+💻 $ cat /home/dennis/nflinventory/discussion/inbox.md + 8 commands  0.1s
+
+────────────────────────────────────────
+I need the round frontmatter format. AGENTS.md says "Use the round frontmatter in AG
+ENTS.md" but AGENTS.md as shown doesn't have it... wait, maybe there's more to AGENTS.md —
+ I read the whole file (85 lines). Hmm, the task brief template says "Use the round front
+matter in AGENTS.md." Maybe the zipbiz repo has it; but here maybe there's a template
+ in bin/*.sh.example. Let me check bin/hermes-round.sh.example and bin/sync to see what front
+matter fields are required (model, harness, round, role, date, claim?).
+∴ Thought for 1s · I need the round frontmatter format.
+────────────────────────────────────────
+
+💻 $ cat /home/dennis/nflinventory/bin/hermes-round.sh.example + 4 commands  0.1s
