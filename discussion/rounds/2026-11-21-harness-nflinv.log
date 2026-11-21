@@ -1092,3 +1092,64 @@ index c206c64..da55375 100644
 [0m→ [0mRead lib/importer.ts
 [0m→ [0mRead lib/format.ts
 [0m→ [0mRead bin/claim
+[0m
+[0m# [0mTodos
+[✓] Verify independence eligibility and inspect the claim, prior round, and discussion conventions
+[•] Cross-check r01 against README and current app code without repeating its research wholesale
+[ ] Write only the required r02 challenge with concessions, rated objections, and settling evidence
+[ ] Run bin/sync and report the outcome
+[0m
+The core check is already adverse to r01’s completion case: it lists six *proposed* claims but explicitly leaves filing them to a later circle, and only C001 exists. I also found two concrete correctness gaps its whole-repo survey missed: non-identical cards can be collapsed as duplicates, and failed sale inserts during import are ignored.
+[0m✱ [0mGlob "C*/claim.md"[90m in discussion/claims · 1 match[0m
+[0m✱ [0mGrep "^verdict:|^confidence:|^## Objection|^## Concessions|SETTLE"[90m in discussion · 2 matches[0m
+[0m✱ [0mGrep "S7|priority|dependencies|live URL|deployment"[90m in docs · 9 matches[0m
+[0m→ [0mRead lib/importer.test.ts
+[0m→ [0mRead bin/numes-round.sh
+[0m
+[0m$ [0mnpm test
+npm notice run nflinventory@0.1.0 test
+npm notice run node --test lib/*.test.ts
+(node:1738344) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/dennis/nflinventory/lib/importer.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/dennis/nflinventory/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ guesses every column of the existing sheets (1.760964ms)
+✔ money parsing (0.419609ms)
+✔ serial parsing (0.356365ms)
+✔ signature parsing (0.257677ms)
+✔ parallel normalising (0.239975ms)
+✔ full Flagship row (0.681095ms)
+✔ Inception row with dual players, 'none live' and a non-numeric eBay note (0.413276ms)
+✔ skips empty rows and rows without a card number (0.179467ms)
+✔ a sold price makes a sale and marks the card sold (0.550173ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 131.855238
+[0m
+[0m✱ [0mGrep "textSearch|vercel\.app|/api/mcp|/api/ingest"[90m in . · 12 matches[0m
+[0m
+[0m$ [0mnpm run typecheck
+npm notice run nflinventory@0.1.0 typecheck
+npm notice run tsc --noEmit
+[0m
+[0m✱ [0mGrep "challenger|adjudicator|settles|reopen|confidence"[90m in . · 8 matches[0m
+[0m✱ [0mGrep "getSheets|first sheet|sheet.*default|multiple sheets"[90m in node_modules/read-excel-file · 6 matches[0m
+[0m→ [0mRead lib/importer.test.ts[90m [limit=15, offset=1][0m
+[0m
+[0m$ [0mgit status --short && git diff --stat && git diff -- docs/STORIES.md
+M discussion/rounds/2026-11-21-harness-nflinv.log
+ discussion/rounds/2026-11-21-harness-nflinv.log | 48 +++++++++++++++++++++++++
+ 1 file changed, 48 insertions(+)
+[0m
+The strongest objection is narrow and decisive: **the deliverable was not filed**, not that every observation in r01 is wrong. I’m keeping the secondary objections moderate where they show incompleteness rather than disproving the valid findings, and I’ve independently confirmed the existing 9 tests and typecheck.
+[0m# [0mTodos
+[✓] Verify independence eligibility and inspect the claim, prior round, and discussion conventions
+[✓] Cross-check r01 against README and current app code without repeating its research wholesale
+[•] Write only the required r02 challenge with concessions, rated objections, and settling evidence
+[ ] Run bin/sync and report the outcome
+[0m

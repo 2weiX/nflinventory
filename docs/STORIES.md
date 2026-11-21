@@ -219,6 +219,23 @@ He works at a desk for bulk jobs and on his phone at shows. He also works throug
 
 **Harness side (not in this repo, for Dennis's harness agents):** add a step after hourly pricing that posts to `/api/ingest/boards`, and poll `/api/ingest/requests` for pasted links.
 
+**Edge cases to handle (found 2026-11-20, from breakdata's real data and the pricing flow):**
+
+| # | Edge case | Handling |
+|---|---|---|
+| 1 | Spot names collide inside one board (two `Las Vegas Raiders` team spots in a mixed case) | Spots are keyed by **index within the board**, never by name. The UI shows the index. |
+| 2 | A board is cancelled or refunded **after** Dennis bought a spot | Carry `wn_status` into the payload (`status: completed\|cancelled\|...`). A bought spot on a cancelled board shows "refunded/never ran" and is excluded from profit until Dennis confirms the money came back. |
+| 3 | Division-structure boards (`AFC North` spots) — spot content alone cannot classify them | Carry breakdata's classification provenance flag (`hand-veto` vs `category-inherited`). The UI labels confidence. |
+| 4 | Mixed-product boards (Flagship + Chrome boxes in one case) | One `product` field per board is a lie. Allow a per-spot product override; the board keeps the majority product. |
+| 5 | No card value for a spot (blank spots; college players in products the platform doesn't cover - Donruss 2026 is staged but not seeded) | `card_cents: null` is legal. Max bid falls back to `room_cents - margin`; the UI shows "unpriced" and never flags a buy on a null value. |
+| 6 | A US seller's board priced in USD | `currency` is per board, no conversion (already in the contract). The UI displays non-EUR currency prominently; totals that mix currencies are per currency only. |
+| 7 | The `.20` effective-ask discount is house-specific | Per-seller config on the harness, not a global constant. The payload carries the discount already applied. |
+| 8 | A board is still live when priced (asks move every minute) | Prefer completed boards. A live board's pricing carries `volatile: true`; the staleness warning for those is minutes, not hours. |
+| 9 | Concurrent double-ingest of one board (harness retry after a timeout) | The replace-by-break-id upsert runs in **one transaction** - no half-replaced board. |
+| 10 | A scrape caught the board before spots were listed | An empty `spots` array is rejected (400); the board request stays `waiting` for the next pass. |
+| 11 | Batch pricing vs the football MCP's 20 req/min cap | A 32-spot board ≈ 2 minutes of pacing; a 10-board batch ≈ 20 minutes. The hourly cadence must budget for it or boards go stale in the queue. |
+| 12 | The harness is down when the break starts | The board page shows the data-age warning and the board's raw link. The app never pretends the pricing is current. |
+
 **Harness-side data sources, verified live 2026-11-20:**
 - Board inventory: `2weiX/breakdata` (`scan/` daily scans, `breaks.csv` per-break rows, `spots/<id>.csv`
   per spot). The payload contract above maps 1:1 from its columns (`seller` → `seller`, `product` →
