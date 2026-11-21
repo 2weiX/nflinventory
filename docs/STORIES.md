@@ -250,6 +250,26 @@ He works at a desk for bulk jobs and on his phone at shows. He also works throug
 
 ---
 
+## External references (surveyed 2026-11-20, verified on GitHub)
+
+**License rule: only MIT-licensed code may be copied into this repo. The repo is public and the
+owner is identified in it — unlicensed repos are design references only, never code sources.**
+
+| Repo | License | Relevant for | Borrow |
+|---|---|---|---|
+| `YosefHayim/ebay-mcp` | **MIT** | S11/S12 | OAuth 2.1 user-token flow, refresh handling, draft-creation patterns (already the story's named reference) |
+| `jbwashington/ebay-mcp` | **MIT** | S11/S12 | eBay **listing automation** for Claude Code — a second reusable implementation of the draft path |
+| `cardlister`, `grailchaser`, `sports-card-inventory` | none | S15 design | photo scan with AI identification + a review-before-save step: the UX shape only, no code |
+| `grailchaser`, `mc-sports-tracker` | none | S10 design | card-show mode patterns: fast sale flow, offline tolerance |
+| `ebay-project`, `cardlister`, `grailchaser` | none | S12 design | eBay sold-comp fetching and title/description templating ideas |
+| `mc-sports-tracker` | none | S5 design | cost/fees/profit presentation |
+
+The two MIT ebay-mcp repos are the shortcut for S11's build: they hold the OAuth/token-refresh and
+draft-creation plumbing the story needs, so the implementation starts from working MIT code instead
+of from the API docs. Everything else is a screenshot of someone else's UX.
+
+---
+
 # QA: Definition of Done (every story, every agent)
 
 A story is **Done** only when all of these hold. Paste the evidence in `docs/HANDOFF.md`.
