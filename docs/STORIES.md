@@ -276,7 +276,8 @@ owner is identified in it — unlicensed repos are design references only, never
 |---|---|---|---|
 | `YosefHayim/ebay-mcp` | **MIT** | S11/S12 | OAuth 2.1 user-token flow, refresh handling, draft-creation patterns (already the story's named reference) |
 | `jbwashington/ebay-mcp` | **MIT** | S11/S12 | eBay **listing automation** for Claude Code — a second reusable implementation of the draft path |
-| `cardlister`, `grailchaser`, `sports-card-inventory` | none | S15 design | photo scan with AI identification + a review-before-save step: the UX shape only, no code |
+| `edvedafi/cardlister` | granted in writing (issue #1 thread, 2026-11-21: MIT reuse, credited) | S15/S10 | retired by its author; the successor is `neonbinder/neonbinder-app` (Convex+GCP, TypeScript monorepo, public but **no LICENSE file yet** - design reference until licensed; grant requested on the same thread). Photo scan with AI ID + review-before-save is the UX cardlister proved |
+| `grailchaser`, `sports-card-inventory` | none | S15 design | photo scan with AI identification + a review-before-save step: the UX shape only, no code (asks filed, replies pending) |
 | `grailchaser`, `mc-sports-tracker` | none | S10 design | card-show mode patterns: fast sale flow, offline tolerance |
 | `ebay-project`, `cardlister`, `grailchaser` | none | S12 design | eBay sold-comp fetching and title/description templating ideas |
 | `mc-sports-tracker` | none | S5 design | cost/fees/profit presentation |
