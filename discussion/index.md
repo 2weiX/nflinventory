@@ -7,7 +7,7 @@ does not exist in public sources - that is a result, not a to-do.
 
 | Claim | Status | Verdict | Conf. | Rounds |
 |---|---|---|---|---|
-| [C001 First circle: survey the nflinventory app and file a claim backlog](claims/C001-first-circle-survey-the-nflinventory-app/claim.md) | open | - | unknown | 1 |
+| [C001 First circle: survey the nflinventory app and file a claim backlog](claims/C001-first-circle-survey-the-nflinventory-app/claim.md) | open | - | unknown | 2 |
 
 ## Where the argument stands
 
