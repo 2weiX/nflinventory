@@ -43,7 +43,8 @@ reasonable reading, note it, and move on.
 - Supabase project `nflinventory`, ref `ngxfvhlbrhlqarpwavcf` (eu-west-1). Publishable key and URL are in `.env.example`.
 - Hosting: Vercel (project imported from `2weiX/nflinventory`, branch `main`).
 - Dennis's own MCP "football" (sets, checklists, odds, box prices, card prices) runs on his Hermes harness.
-  For S8 (value refresh) Claude combines it with this app's MCP. For S16 (board pricing) the app calls it
-  **server-side** with `FOOTBALL_MCP_URL` / `FOOTBALL_MCP_TOKEN` from Vercel env vars.
+  For S8 (value refresh) Claude combines it with this app's MCP. For S16 (board pricing) the **harness** scrapes and
+  prices boards hourly and pushes them to this app's ingest endpoint. The app never scrapes Whatnot and never
+  re-implements the pricing model.
 - Whatnot is **read-only** for this app: read boards, never click buy/bid/spot buttons, never place pre-bids.
 - eBay developer account: approval pending (registered 2026-11-21). S11 and S12 stay blocked until keys exist.

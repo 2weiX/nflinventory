@@ -21,7 +21,7 @@ He works at a desk for bulk jobs and on his phone at shows. He also works throug
 | S8 | Claude refreshes values with my football MCP | P1 | 🔜 (needs S7) |
 | S9 | Value history per card | P1 | 🔜 |
 | S10 | Works well on my phone at a show | P1 | 🔜 |
-| S16 | Price a Whatnot board from a link | P2 | 🔜 (needs football MCP URL + ledger from Dennis) |
+| S16 | Whatnot board prices from the harness (desktop) | P2 | 🔜 |
 | S11 | Create an eBay draft in one click | P0 | ⏳ eBay developer approval |
 | S12 | Match cards to the eBay catalog | P1 | ⏳ needs S11 keys |
 | S13 | Whatnot integration | P3 | 💤 |
@@ -137,40 +137,52 @@ He works at a desk for bulk jobs and on his phone at shows. He also works throug
 - [ ] The card page shows "Record sale" near the top on mobile, defaulting to channel "show" and today's date.
 - [ ] The app can be added to the home screen (web app manifest and icon).
 
-## S16 · Price a Whatnot break board from a link 🔜 P2 (needs S7 for the Claude part only)
-*As Dennis, I paste a Whatnot link into the app. It reads the board and shows, for every spot, what the room usually pays, what the cards are fair for (odds × checklist × player prices) and my max bid. I can see at a glance which spots are worth bidding on, and I bid by hand.*
+## S16 · Whatnot board prices from the harness 🔜 P2
+*As Dennis, I open the app on my desktop and see every Whatnot board my harness scraped this hour. For each spot I see the room price, the card value and my max bid, with good buys flagged. When I paste a board link the harness hasn't seen yet, it gets priced on the next run.*
 
-**Two fair values per spot, shown side by side**
-1. **Room price:** what buyers actually pay for this team, in this product and box kind. Method (bidding playbook): take every sold-out board that isn't random-team, normalise each board to its own total, take the **median team share across boards**, pooled across sellers, scale so one box = box cost, × number of boxes.
-2. **Card value:** what the cards are worth. Expected hits per box from the **odds** × which teams hold which cards from the **checklist** × **player prices**, attributed to teams, × number of boxes. Show coverage honestly: when most cards are unpriced, mark the value as a floor.
+**Who does what**
+| Where | Does |
+|---|---|
+| **Hermes harness** (Dennis's, hourly) | Scrapes Whatnot boards (read-only), saves board numbers and data to GitHub, prices each board with the football MCP (room price + card value + max bid), and **pushes the result to this app**. |
+| **This app** | Receives and stores the priced boards, shows them, takes "please price this link" requests, records which spots Dennis bought. **The app does no scraping and no pricing maths.** That keeps one pricing model, on the harness. |
 
-**Max bid:** a rule computed from the two (default `min(room, card)`, as breakwatch does). The rule is a setting, so Dennis can change it without code. Always show both inputs next to it.
+**Desktop first.** The board screens are built for a desktop width. On the phone they only need to be readable (S10 rules don't apply here).
 
-**Data sources**
-- **Whatnot board:** read-only, from the pasted link (show or break URL). No clicking, no buying, no bidding, no pre-bids, ever. First task is a spike: can the server read the board's public data from the link (title, description, seller, spots, asks, sold prices)? If Whatnot blocks server requests, fall back to a bookmarklet Dennis runs on the open board in his own browser. It reads the visible data and sends it to the app. Document which route works.
-- **Dennis's football MCP (Hermes harness):** the app calls it **server-side** for `box` (box cost by format), `odds`, `checklist` and `pc` (prices). Needs `FOOTBALL_MCP_URL` and `FOOTBALL_MCP_TOKEN` in Vercel env only. Cache answers per product for a few hours.
-- **Room-price history:** every board the app reads is stored (spots, sold prices, seller, box kind, mechanic, sold-out). Plus a one-time import of Dennis's existing ledger (≈313 boards, 10,160 spots) so room prices work from day one.
+**What the app builds**
+1. **Ingest endpoint** `POST /api/ingest/boards`: the harness sends one or many priced boards as JSON. Idempotent per Whatnot break id: resending replaces that board's spots. Authenticated with a long random `INGEST_TOKEN` (Vercel env, server-only; the harness keeps the same value). Rows are written as Dennis's user (`OWNER_USER_ID` env) using the Supabase secret key **on the server only**.
+2. **Request queue**: pasting a Whatnot link in the app stores the break id in `board_requests` (status: waiting / priced / failed + reason). The harness picks them up with `GET /api/ingest/requests` (same token) and marks them done when it pushes the board.
+3. **Boards list** (desktop): newest first. Seller, product, box kind, boxes, start time, mechanic, whole-board ratio (total asks ÷ (boxes × box cost)), number of buy flags, last priced.
+4. **Board page**: per spot: ask or sold price, room price, card value, max bid, edge (max bid − ask), flag, and the number of boards behind the room price. Sorted by edge. Random-team boards are labelled. A standing .20 discount shows the effective ask. A "data age" warning shows when the last push is over 2 hours old.
+5. **"I bought this spot"** with the price paid (feeds profit and S14 later).
 
-**Rules carried over from the playbook (each one needs a test)**
-- Random-team boards (≤3 distinct prices, max/min spread < 1.3) are stored but excluded from room prices.
-- Team names are matched by the **full team name anchored at the start** of the spot title; short aliases that collide (e.g. "Washington", "Arizona") are not used. Player spots on pick-your-player boards are summed into team totals, but only for sold-out boards with a "Rest/Others" spot.
-- The number of boxes and the box kind are parsed from title and description separately, taking the richer; the two are never summed. If unclear, ask Dennis on the page instead of guessing 1.
-- Hobby, Value, Mega, Jumbo, Blaster, Hanger and Fat Pack are never compared with each other.
-- Sold prices ending in .20 indicate a running 20% code: show the effective ask (0.8×).
-- Room prices need at least N sold-out boards (default 5, setting); below that, show "too few boards" instead of a number.
+**Payload contract** (`docs/INGEST.md`; the harness must match it, so version it)
+```json
+{
+  "version": 1,
+  "boards": [{
+    "break_id": "6155252", "url": "https://www.whatnot.com/...", "seller": "zo20rips",
+    "title": "...", "product": "2026 Topps Inception", "box_kind": "hobby", "boxes": 4,
+    "mechanic": "auction|list|rtb|rtb-div", "currency": "EUR", "starts_at": "2026-11-22T19:00:00Z",
+    "sold_out": false, "box_cost_cents": 21900,
+    "model": "breakwatch min(fair_retail,fair_sold) v3", "priced_at": "2026-11-21T22:00:00Z",
+    "spots": [{ "name": "Las Vegas Raiders", "kind": "team|team-player|team-others|multi-team|blank",
+                "ask_cents": 3100, "sold_cents": null, "room_cents": 2850, "room_n": 27,
+                "card_cents": 2400, "card_coverage": 0.62, "max_bid_cents": 2400 }]
+  }]
+}
+```
 
 **Acceptance criteria**
-- [ ] Paste a Whatnot link → within 30 s the board page shows: product, box kind, boxes, seller, mechanic, and per spot: ask (or sold price), room price, card value, max bid, edge (max bid − ask), flag.
-- [ ] Whole-board line: total asks ÷ (boxes × box cost), and how many boards the room price is based on.
-- [ ] Spots sort by edge. Buy flags where ask ≤ max bid. Spots already sold show their price, and how they compare to the room price.
-- [ ] "I bought this spot" with the price paid, which feeds the S5 profit view later (cost basis) and S14 (cards from this break).
-- [ ] Tables `boards`, `board_spots` (and `ledger_imports` if useful) with row-level security and a numbered migration.
-- [ ] Unit tests for: random-team detection, team-name matching (including the Raiders/Washington and Arizona cases), box parsing, median-share room price, card value with coverage, the max-bid rule.
-- [ ] Check against reality: for 3 boards already in the ledger, the app's room price per team is within 10% of the ledger's own median share. Document the comparison in the handoff.
-- [ ] The football MCP being down or slow shows "card value unavailable", and room price still works.
-- [ ] MCP tools for Claude (once S7 exists): `price_board(url)`, `list_boards`, `get_board`, `mark_spot_bought`.
+- [ ] Ingest rejects a missing or wrong token (401), an unknown `version` (400) and a malformed board (400, with the reason). It never writes partial boards.
+- [ ] Sending the same board twice gives one board with the newer spots, not duplicates.
+- [ ] Tables `boards`, `board_spots`, `board_requests` with row-level security (Dennis reads; only the server writes ingest rows) and a numbered migration.
+- [ ] Paste link → request shows "waiting" → after a simulated harness push it shows the priced board. Tested with a script in `scripts/` that posts a sample payload.
+- [ ] Money as cents with the currency per board. No conversion.
+- [ ] Unit tests: payload validation, buy-flag and edge maths, whole-board ratio, .20 discount detection, stale-data warning.
+- [ ] `docs/INGEST.md` documents the endpoint, the payload, the token setup and a curl example for the harness side.
+- [ ] Secrets: `INGEST_TOKEN` and the Supabase secret key exist only in Vercel env vars and on the harness, never in the repo or browser code.
 
-**Dennis must provide:** the football MCP's URL and how it authenticates (token), and where the ledger CSV lives (or upload it once).
+**Harness side (not in this repo, for Dennis's harness agents):** add a step after hourly pricing that posts to `/api/ingest/boards`, and poll `/api/ingest/requests` for pasted links.
 
 ## S11 · Create an eBay draft in one click ⏳ (waiting for eBay developer approval)
 *As Dennis, I press one button on a card and an eBay draft appears in my Seller Hub, ready for photos and a final check.*

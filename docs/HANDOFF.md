@@ -13,5 +13,5 @@ Open issues / next step:
 Anything Dennis must do:
 - Deploy on Vercel with the two env vars from `.env.example`; set Supabase Auth Site URL to the Vercel URL; create your account; then turn off "Allow new users to sign up".
 - Import toppsinventory from the live Google Sheet (it carries the eBay IDs), then inceptioninventory.
-- For S16 (board pricing from a Whatnot link): give the football MCP's URL + token (as Vercel env vars `FOOTBALL_MCP_URL`, `FOOTBALL_MCP_TOKEN`), and the existing board ledger CSV. Max bid defaults to min(room price, card value); change it any time in settings.
+- For S16: on the harness, add a step that pushes priced boards to `/api/ingest/boards` and polls `/api/ingest/requests` (contract in `docs/INGEST.md` once S16 is built). Generate a long random `INGEST_TOKEN` and set it in Vercel and on the harness; also set `SUPABASE_SECRET_KEY` and `OWNER_USER_ID` in Vercel.
 - When eBay approves the developer account: create the Production keyset + RuName and put them in Vercel env vars (unblocks S11).
