@@ -17,7 +17,14 @@ LEAKS = (
                        r"(?:\.|\s*[\[({<]\s*(?:dot|punkt)\s*[\])}>]\s*)[a-z]{2,}"),
     ("phone number", r"(?:\+49|\b0)[\d][\d \-/()]{6,}\d"),
     ("phone number", r"(?:\+|\b00)[1-9]\d{0,2}[\d \-/().]{6,}\d"),
-    ("coordinate", r"\b\d{1,3}[.,]\d{4,}"),
+    # 2026-11-21 (nflinventory copy): the single-number form fired on a test
+    # timing ('money parsing (0.419609ms)') and an agent transcript's metrics
+    # ('duration_ms 131.855238'). A real coordinate leak is a PAIR or carries
+    # its label - so the pattern wants either 'lat/lon <number>' or a
+    # comma-space pair '52.5185, 13.4023'. A lone decimal is a metric, not a
+    # coordinate.
+    ("coordinate", r"(?:lat|lon|latitude|longitude)\D{0,20}\d{1,3}[.,]\d{4,}"),
+    ("coordinate", r"\b\d{1,3}[.,]\d{4,}\s*,\s*-?\d{1,3}[.,]\d{4,}\b"),
     ("street address", r"\b\w*(?:stra(?:ß|ss)e|damm|allee|gasse|platz|weg)\s+\d"),
     ("street address", r"\b\w*str(?:\.\s*|\s+)\d"),
     ("postcode + city", r"\b\d{5}\s+[A-ZÄÖÜ]\w+"),

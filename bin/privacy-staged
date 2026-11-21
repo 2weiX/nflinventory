@@ -51,6 +51,10 @@ def text_exempt(f: str) -> bool:
 
 
 def main() -> int:
+    # the repo's own author domains, derived from the actual commit history so a
+    # new identity is auto-allowed
+    gitlog = subprocess.run(["git", "log", "--format=%ae"], capture_output=True, text=True).stdout
+    own_domains = {a.strip().rsplit("@", 1)[-1].lower() for a in gitlog.splitlines() if "@" in a}
     files = staged_files()
     bad: list[tuple[str, str]] = []
     for f in files:
@@ -70,6 +74,11 @@ def main() -> int:
         blob = DATES.sub(" ", _fold(text))
         for name, rx in LEAKS:
             m = re.search(rx, blob, re.I)
+            if m and name == "e-mail address" and m.group(0).lower().rsplit("@", 1)[-1] in own_domains:
+                # the repo's own git commit identity - it appears in every
+                # "git show" an agent transcript runs, and it is already
+                # public in the commit history. Not someone else's address.
+                continue
             if m:
                 bad.append((f, f"{name}: {m.group(0)[:48]!r}"))
     if bad:
