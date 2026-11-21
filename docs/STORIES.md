@@ -21,6 +21,7 @@ He works at a desk for bulk jobs and on his phone at shows. He also works throug
 | S8 | Claude refreshes values with my football MCP | P1 | 🔜 (needs S7) |
 | S9 | Value history per card | P1 | 🔜 |
 | S10 | Works well on my phone at a show | P1 | 🔜 |
+| S16 | Price a Whatnot break board | P2 | 🔜 (needs S7; one decision from Dennis) |
 | S11 | Create an eBay draft in one click | P0 | ⏳ eBay developer approval |
 | S12 | Match cards to the eBay catalog | P1 | ⏳ needs S11 keys |
 | S13 | Whatnot integration | P3 | 💤 |
@@ -136,6 +137,30 @@ He works at a desk for bulk jobs and on his phone at shows. He also works throug
 - [ ] The card page shows "Record sale" near the top on mobile, defaulting to channel "show" and today's date.
 - [ ] The app can be added to the home screen (web app manifest and icon).
 
+## S16 · Price a Whatnot break board 🔜 P2 (needs S7)
+*As Dennis, I open a Whatnot break, and before it starts I see each spot's ask next to what it's worth and my max bid. Good buys are flagged, so I bid by hand on the right spots.*
+
+**Ground rules (from the bidding playbook and harness notes in the Whatnot project)**
+- **Read-only on Whatnot.** Never click spot, buy or bid buttons and never place pre-bids. Pre-bid automation failed in ways that couldn't be detected, and a loose button match once opened the wallet. The app produces numbers; Dennis bids.
+- **One pricing model, not a third.** The fair-value and max-bid maths already lives on the Hermes harness (breakwatch: `max_bid = min(fair_retail, fair_sold)`), and an older session's notes use a 50/50 blend. The app **stores and shows** prices that come from the harness or the football MCP; it doesn't recompute them in its own code.
+- **Prices per box kind.** Hobby, Value, Mega, Jumbo, Blaster, Hanger and Fat Pack are different products with different odds. Never compare €/box across them.
+
+**How it works**
+- Claude (or the harness) reads the board, prices every team spot using the football MCP (`box`, `odds`, `pc`, `checklist`) plus the harness model, and saves the result through a new app MCP tool `save_board_pricing`.
+- The app shows the board and records which spots Dennis bought and at what price.
+
+**Acceptance criteria**
+- [ ] New tables `boards` (whatnot_break_id, seller, product, box kind, number of boxes, mechanic: auction / list / random-team, sold out, priced_at, model name) and `board_spots` (team or player, ask, sold price, fair value, max bid, flag, bought_by_me, paid). Row-level security on both, plus a numbered migration.
+- [ ] MCP tools: `save_board_pricing` (create or replace one board's prices; idempotent per break id), `list_boards`, `get_board`, `mark_spot_bought`.
+- [ ] Board page: spots sorted by edge (max bid − ask). Buys flagged where ask ≤ max bid. Shows the whole-board ratio, total asks ÷ (boxes × box cost), and the standing discount when sold prices end in .20.
+- [ ] Random-team boards are labelled as such and excluded from any per-team statistic (≤3 distinct prices and a max/min spread under 1.3).
+- [ ] Every price shows its model name and date, so numbers from different models are never mixed silently.
+- [ ] Money as cents in EUR or USD with the currency stored per board. No conversion unless Dennis asks for it.
+- [ ] Tested in claude.ai: "price board 6155252 for me" ends with the board visible in the app, every spot priced or explicitly marked "no price".
+- [ ] Later link (S14): a bought spot can be linked to the cards that came out of it.
+
+**Decision for Dennis before building:** which fair-value model counts, breakwatch's `min(fair_retail, fair_sold)` or the 50/50 blend? Until he decides, show whatever the harness returns and label it.
+
 ## S11 · Create an eBay draft in one click ⏳ (waiting for eBay developer approval)
 *As Dennis, I press one button on a card and an eBay draft appears in my Seller Hub, ready for photos and a final check.*
 
@@ -150,7 +175,7 @@ He works at a desk for bulk jobs and on his phone at shows. He also works throug
 - [ ] For cards without an ePID: search eBay's catalog by year + set + player + card #, then pick the parallel using the name mapping in the Whatnot project (`ebay-catalog-parallel-mapping.md`).
 - [ ] Shows the candidates for confirmation; never assigns one silently.
 
-## 💤 Later: S13 Whatnot integration · S14 link cards to the break they came from (from Dennis's break trackers) · S15 photo scanning with a review step
+## 💤 Later: S13 Whatnot integration (selling side; board pricing is S16) · S14 link cards to the break they came from (from Dennis's break trackers) · S15 photo scanning with a review step
 
 ---
 
