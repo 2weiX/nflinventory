@@ -2,3 +2,21 @@
 TASK  C001-first-circle-survey-the-nflinventory-app   role=adjudicator  round=3
 CLAIM First circle: survey the nflinventory app and file a claim backlog
 STATUS open  falsifier: The survey itself, cross-checked against the README and the running app - any claim it files is re-verified by the challenger against the actual code
+I wrote the round 3 verdict for C001, updated `claim.md`, and ran `bin/sync`, which reindexed and synced to origin/main. The gate raised no objection.
+
+**Independence:** I am `claude-sonnet-5-5`, the roster's adjudicator. Round 1 was `z-ai/glm-5.3-flash` and round 2 was `moonshotai/kimi-k3.1-pro:free`, so there was no collision and the challenge counted at full weight.
+
+**Verdict: weakened.** The claim stays `open`, with confidence `medium`.
+- **What holds:** The survey is largely sound. Import undo deleting later sales through the cascade is confirmed from the code.
+- **What is missing:** The backlog was never filed, and `discussion/claims/` still holds only C001. Nobody has seen the running app.
+- **Where round 1 was wrong:**
+  - Its line count: it says about 1,050, and I count 1,588 across the 14 files.
+  - Its S7 dependency claim: S8 also needs S9, so "everything else exists" is false.
+  - Its build fix: it prescribes a refactor for what it admits is not a code defect.
+- **Where round 2 was wrong:**
+  - The grouping-key risk is overstated, because no divergent pair has been shown.
+  - The import's sale-insert failure is not fully silent, because the result screen shows a sales count.
+- **Left unresolved:** whether a deployment exists, whether client-side search scales, and whether a bare build fails in the documented README flow.
+- **Next circle:** the verdict lists six narrowed claims to file with `bin/claim`, and says to drop round 1's "S7 is highest-value" item.
+
+I could not run `npm` in the sandbox, so I did not re-run tests or the build. The pass/fail figures in the verdict come from rounds 1 and 2, and the verdict says so.
