@@ -1,0 +1,4 @@
+[04:00] round 1/8  role=adjudicator  via bin/claude-round.sh
+TASK  C001-first-circle-survey-the-nflinventory-app   role=adjudicator  round=3
+CLAIM First circle: survey the nflinventory app and file a claim backlog
+STATUS open  falsifier: The survey itself, cross-checked against the README and the running app - any claim it files is re-verified by the challenger against the actual code
