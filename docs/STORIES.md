@@ -40,8 +40,8 @@ He works at a desk for bulk jobs and on his phone at shows. He also works throug
 | S9 | Value history per card | P1 | 🔜 |
 | S10 | Works well on my phone at a show | P1 | 🔜 |
 | S16 | Whatnot board prices from the harness (desktop) | P2 | 🔜 |
-| S11 | Create an eBay draft in one click | P0 | ⏳ eBay developer approval |
-| S12 | Match cards to the eBay catalog | P1 | ⏳ needs S11 keys |
+| S11 | Create an eBay draft in one click | P0 | 🔨 buildable in **sandbox** now (keys 2026-11-22); production cutover waits on the developer approval |
+| S12 | Match cards to the eBay catalog | P1 | 🔨 sandbox keys unblock the catalog lookup; production later |
 | S13 | Whatnot integration | P3 | 💤 |
 | S14 | Link cards to the break they came from | P3 | 💤 |
 | S15 | Scan photos to add cards | P3 | 💤 |
@@ -249,8 +249,12 @@ He works at a desk for bulk jobs and on his phone at shows. He also works throug
 - The pricing model itself ("breakwatch min(fair_retail,fair_sold) v3") lives on the Mac and stays there;
   this repo consumes its output through the ingest contract only.
 
-## S11 · Create an eBay draft in one click ⏳ (waiting for eBay developer approval)
+## S11 · Create an eBay draft in one click 🔨 (sandbox keys registered 2026-11-22 — build now, cut over to production when the developer approval completes)
 *As Dennis, I press one button on a card and an eBay draft appears in my Seller Hub, ready for photos and a final check.*
+
+Sandbox credentials: `docs/EBAY_SANDBOX.md` (Cert ID in the local env only). The build targets the
+sandbox endpoints first; the production cutover is an env-var swap plus a redirect-URL registration,
+not a code change.
 
 - [ ] Server-side eBay OAuth (user token, `sell.inventory` scope). Tokens are stored encrypted per user, refresh automatically, and are never sent to the browser. Keys live only in Vercel env vars: `EBAY_CLIENT_ID`, `EBAY_CLIENT_SECRET`, `EBAY_RUNAME`.
 - [ ] The draft uses the ePID when there is one, otherwise title + category 261328 + item specifics (player, team, year, manufacturer, set, card #, parallel, print run, auto, RC, graded).
