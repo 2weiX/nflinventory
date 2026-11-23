@@ -14,7 +14,8 @@ does not exist in public sources - that is a result, not a to-do.
 | [C005 Cold-start build fails opaque without env vars](claims/C005-cold-start-build-fails-opaque-without-en/claim.md) | open | - | unknown | 1 |
 | [C006 Inventory loads and filters client-side; scale limit unmeasured](claims/C006-inventory-loads-and-filters-client-side-/claim.md) | open | - | unknown | 1 |
 | [C007 Deployment URL not recorded; DoD item 6 cannot run](claims/C007-deployment-url-not-recorded-dod-item-6-c/claim.md) | open | - | unknown | 1 |
+| [C008 S12 variant-to-eBay mapping: ePID lookup with checklist-keyword fallback](claims/C008-s12-variant-to-ebay-mapping-epid-lookup-/claim.md) | open | - | unknown | 0 |
 
 ## Where the argument stands
 
-- **7** open
+- **8** open
