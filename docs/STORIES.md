@@ -40,8 +40,8 @@ He works at a desk for bulk jobs and on his phone at shows. He also works throug
 | S9 | Value history per card | P1 | 🔜 |
 | S10 | Works well on my phone at a show | P1 | 🔜 |
 | S16 | Whatnot board prices from the harness (desktop) | P2 | 🔜 |
-| S11 | Create an eBay draft in one click | P0 | 🔨 buildable in **sandbox** now (keys 2026-11-22); production cutover waits on the developer approval |
-| S12 | Match cards to the eBay catalog | P1 | 🔨 sandbox keys unblock the catalog lookup; production later |
+| S11 | Create an eBay draft in one click | P0 | 🔨 production keys live (2026-11-22, verified); user-token flow needs a registered redirect URL; sold-comps API is a separate growth check |
+| S12 | Match cards to the eBay catalog | P1 | 🔨 production taxonomy + Browse live now; Catalog product search and the sold-comps API are gated |
 | S13 | Whatnot integration | P3 | 💤 |
 | S14 | Link cards to the break they came from | P3 | 💤 |
 | S15 | Scan photos to add cards | P3 | 💤 |

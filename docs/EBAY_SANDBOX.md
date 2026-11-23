@@ -1,4 +1,19 @@
-# eBay REST API - sandbox credentials
+# eBay REST API - credentials
+
+## Production (live 2026-11-22)
+
+Production keyset verified live: client-credentials token minted, the EBAY_DE
+taxonomy tree answered through `api.ebay.com`. All three values live in the
+local environment file only (`EBAY_PROD_APP_ID`, `EBAY_PROD_DEV_ID`,
+`EBAY_PROD_CERT_ID`) - **no production value is committed, per the standing
+rule; the Cert ID is a password**. The keyset needed OAuth enabled in the dev
+portal before the endpoint accepted it (an initially-disabled keyset presents
+as `invalid_client`, not a permissions error - remember that).
+
+Still missing for the full user-token flow: a **redirect URL registered in the
+dev portal** (the S11 OAuth consent step). Register it, never guess it.
+
+## Sandbox
 
 Registered 2026-11-22. Sandbox keys, safe to commit **except the Cert ID**,
 which functions as a password (it mints OAuth tokens) and lives in the local
