@@ -2023,3 +2023,41 @@ Roster confirms model=z-ai/glm-5.3-flash for the researcher seat. I have all the
 ☤ Hermes
 Round file written. Running bin/sync as instructed:
 ────────────────────────────────────────
+
+💻 $ bin/sync  2.9s
+💻 $ git log --oneline -3 + 1 command  0.1s
+
+────────────────────────────────────────
+Sync committed and pushed (the log file is modified locally but sync said "synced to origin/main" —
+ the round was committed as 7e5b7dc; the log file modification is the ongoing session log,
+ which sync may leave uncommitted, fine — that's normal for the loop's own logging
+). Done. Report.
+∴ Thought for 0s · Sync committed and pushed (the log file is modified locally but sync sa…
+────────────────────────────────────────
+
+────────────────────────────────────────
+☤ Hermes
+Done. One file written, sync ran clean.
+
+Round filed: discussion/claims/C004-duplicate-grouping-merges-differing-card/r01-research--harness-nflinv.md (round 1, researcher, glm-5.3-flash), committed by bin/sync as 7e5b7dc and pushed.
+
+Findings, verified against the tree at d66bffa (2026-11-23):
+
+- Grouping key is 12 fields (app/page.tsx:21-22); estimate_cents, list_price_cents, cost_cents, team, is_rookie, auto_type and more are absent from it.
+- Row renders g[0] (page.tsx:190): Value and Ask columns show the representative's money (lines 211-212) while the header total sums every member (lines 79-80). g[0] is deterministically the oldest-created member (fetch ordered by created_at, line 14).
+- Concrete divergent pair filed (section 2): two 2024 Topps Chrome #161 C.J. Stroud Refractor /499 copies identical on all 12 key fields, differing in estimate ($80 vs $55), list price, team and rookie flag. Row shows ×2 / $80.00 / no RC; header total shows $135.00. Constructed, not pulled from live data.
+- Both write paths reach such a pair routinely: per-row money parsing at import (importer.ts:263-264) and per-card editing (cards/[id]/page.tsx:55-56).
+
+Explicit gaps stated in the file: no live-database instance (Supabase rule — a read-only reconciliation query is a story-agent/Dennis task), frequency unmeasured, and intent of the Value column for multi-member groups is unrecorded — a product decision the verdict must name.
+
+Attribution: model field per the roster's researcher seat (z-ai/glm-5.3-flash), harness field per the precedent round on C003.
+────────────────────────────────────────
+
+Resume this session with:
+  hermes --resume local-800a6840fbf204c751103ca779e96ae36ca88158351da11d74d3a6ae676b2121
+  hermes -c "Research C004 duplicate grouping evidence"
+
+Session:        local-800a6840fbf204c751103ca779e96ae36ca88158351da11d74d3a6ae676b2121
+Title:          Research C004 duplicate grouping evidence
+Duration:       1m 20s
+Messages:       40 (1 user, 38 tool calls)
