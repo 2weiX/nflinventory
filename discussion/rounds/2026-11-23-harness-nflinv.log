@@ -7138,3 +7138,23 @@ Wrote file successfully.
 [0m
 Good context. S2 is marked done; the app is a single-user personal inventory tool. Now I have everything I need. Let me write the challenge round.
 Now let me run `bin/sync` to commit and push:
+[0m$ [0mbin/sync
+reindexed 10 claims, 0 decisions
+synced to origin/main
+[0m
+The round passed the independence gate and synced cleanly.
+
+**Summary:**
+
+- **Wrote:** `discussion/claims/C006-inventory-loads-and-filters-client-side-/r02-challenge--harness-nflinv.md`
+- **Model:** `moonshotai/kimi-k3.1-pro:free` (challenger role, roster-declared)
+- **Gate:** passed — no model clash with r01 researcher (`z-ai/glm-5.3-flash`)
+
+**Challenge structure:**
+- **5 concessions** (C1-C5): the code facts are solid — full-table load, client-side filter, no windowing, no row count, unbounded import.
+- **4 objections:**
+  - **OBJ-1 (weak):** Scale concern may be irrelevant for a single-user personal collection; no evidence the threshold is ever approached.
+  - **OBJ-2 (moderate):** The architecture is a deliberate, correct v1 simplification (S2 is P0 and done), not an oversight. `decides: []` means no story decision depends on this.
+  - **OBJ-3 (moderate):** The falsifier conflates a proven code fact with an evidentiary precondition, and a row count alone is insufficient — you also need a performance threshold.
+  - **OBJ-4 (weak):** CSV export works *because* of client-side loading; it's framed as a deficiency when it's actually a feature of the architecture.
+- Each objection names what evidence would settle it.
