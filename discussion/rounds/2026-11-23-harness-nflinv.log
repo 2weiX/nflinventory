@@ -3836,3 +3836,41 @@ Write the file now.
 Now run bin/sync. It stages, runs privacy check, gate, commits, rebases, pushes.
 ∴ Thought for 0s · Now run bin/sync.
 ────────────────────────────────────────
+
+💻 $ bin/sync + 1 command  3.1s
+
+────────────────────────────────────────
+Done: round written, gate passed, committed 687f3b8, pushed to origin/main. Report briefly
+.
+∴ Thought for 0s · Done: round written, gate passed, committed 687f3b8, pushed to origin/m…
+────────────────────────────────────────
+
+────────────────────────────────────────
+☤ Hermes
+Done. Round written, synced, pushed.
+
+File: discussion/claims/C007-deployment-url-not-recorded-dod-item-6-c/r01-research--harness-nflinv.md
+
+Evidence summary (all dated 2026-11-23, repo at 5c2f0ae):
+- DoD item 6 requires "the deployed preview" (docs/STORIES.md:304) — it needs a URL to run.
+- No URL recorded anywhere: HANDOFF.md has no app URL (its only line about deployment says "Screens not yet seen in a browser"); all 4 HANDOFF-touching commits ever contain none; repo-wide grep for vercel.app|vercel.com hits only the C001 discussion rounds; no .vercel/, no vercel.json, no deploy script; README has a placeholder where the URL would go.
+- Guessed subdomain nflinventory.vercel.app re-probed today: still "Noman Fabrics Smart Inventory", /login, /api/mcp, /api/ingest/boards all 404 — same as C001 found on 2026-11-21.
+- Claim preserved as prior verdict framed it: "not recorded", not "no deployment exists". It settles only when Dennis supplies the URL (or states there's no deployment).
+
+Gaps stated, not papered over: whether a live deployment exists in Dennis's Vercel account is unknowable from this loop (no credentials, no deploy artifact); further hostname guessing was declined as evidence.
+
+Two notes:
+1. The brief said "no prior rounds carry a model field" — true only for C007 itself. C001–C006 r01 rounds all carry model:, and bin/gate-independence refuses a round without it. I echoed the roster's binding researcher model (z-ai/glm-5.3-flash) as every prior round did, and noted this in the file.
+2. On the NOTE about 7 claims in flight / budget 6: this round gathers evidence on an existing open claim, files nothing new. Per the falsifier, C007 stays open until Dennis answers it.
+
+bin/sync clean: gate passed, commit 687f3b8, pushed to origin/main.
+────────────────────────────────────────
+
+Resume this session with:
+  hermes --resume local-a6842c541bd4bdd788a66234e107ae92b0d84f569bb2fe59bafd346612599031
+  hermes -c "Research C007 deployment URL claim evidence"
+
+Session:        local-a6842c541bd4bdd788a66234e107ae92b0d84f569bb2fe59bafd346612599031
+Title:          Research C007 deployment URL claim evidence
+Duration:       1m 20s
+Messages:       36 (1 user, 34 tool calls)
