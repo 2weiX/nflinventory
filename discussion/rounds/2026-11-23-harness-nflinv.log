@@ -3401,3 +3401,36 @@ Evidence gathered. Writing the round file now.
 │ +- Supabase docs (1.2): vendor source, cited for the platform's default page behaviour only. No
 │ +  interest in the answer to this claim (the finding is independent of whether the 1,000 default is
 │ +  raised); flagged anyway.
+💻 $ bin/sync + 1 command  2.9s
+
+────────────────────────────────────────
+Sync passed the privacy and independence gates, committed and pushed. Verify the index
+ updated? "reindexed 7 claims" — good enough. Quick verify the round file is on origin
+ and index shows round 1? Check index.md.
+∴ Thought for 0s · Sync passed the privacy and independence gates, committed and pushed.
+────────────────────────────────────────
+
+💻 $ git pull -q + 2 commands  0.7s
+
+────────────────────────────────────────
+☤ Hermes
+Done. Round filed and synced.
+
+What I did: C006 r1 research, written to discussion/claims/C006-inventory-loads-and-filters-client-side-/r01-research--harness-nflinv.md, committed and pushed via bin/sync (commit 146679f, privacy and independence gates clean, index now shows round 1 on C006).
+
+Evidence findings:
+- The design half of the claim is confirmed in code: loadAllCards (app/page.tsx:11-19) pages the whole cards table in unbounded 1,000-row serial round trips, select("*"); all filtering, free-text search (includes, no textSearch anywhere), grouping, sorting and rendering of every row happen in the browser; no size-aware fallback exists; import feeds the table in unbounded 500-row chunks.
+- The 1,000-row paging step matches Supabase's default per-request cap (cited, flagged as a vendor source).
+- The scale limit half: the evidence does not exist and I stopped looking. No row count, benchmark or timing for the live cards table exists anywhere in the repo; discussion agents don't touch the live DB, and discussion/archive/ holds no prior measurement. The 43,770-variant figures in AGENTS.md belong to the football MCP's checklist DB, a different population. The round states this as an explicit gap: the claim is a design observation with an unmeasured scale limit, and one count(*) from Dennis (or a story agent under the story rules) settles the falsifier.
+
+The only dirty file left is the adapter's own session log, which sync stages on its next pass.
+────────────────────────────────────────
+
+Resume this session with:
+  hermes --resume local-fbba03b5345dbe19f5dd9222354c586989574b85e43390d34da824552270c61d
+  hermes -c "Research evidence for C006 client-side inventory claim"
+
+Session:        local-fbba03b5345dbe19f5dd9222354c586989574b85e43390d34da824552270c61d
+Title:          Research evidence for C006 client-side inventory claim
+Duration:       1m 3s
+Messages:       32 (1 user, 30 tool calls)
