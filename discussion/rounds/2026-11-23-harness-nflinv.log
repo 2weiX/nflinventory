@@ -288,3 +288,68 @@ Evidence gathered. The claim holds in code at commit 5e202cb (main). Writing the
 │ +- Every citation is first-party code in this repo, reproducible from commit `5e202cb`; no
 │ … omitted 3 diff line(s) across 1 additional file(s)/section(s)
 💻 $ bin/sync
+💻 $ bin/sync  2.9s
+
+────────────────────────────────────────
+Sync done, pushed to origin. Verify the index reflects C002 round 1? bin/reindex output
+ says 7 claims. Check discussion/index.md quickly for C002 rounds count and confirm push. Actually sync said
+ synced. Quick verify.
+∴ Thought for 0s · Sync done, pushed to origin.
+────────────────────────────────────────
+
+💻 $ grep C002 discussion/index.md + 2 commands  0.1s
+
+────────────────────────────────────────
+The rounds log is modified — that's the sync's own log append; sync committed and pushed (68a95e
+5) but the log was modified again after? bin/sync probably appends to the log then commits
+; but the log shows modified post-commit. Possibly sync committed the round + index, and the log line
+ was appended after commit by the adapter. Leave it — sync is the dispatcher's job; but the working
+ tree is dirty with the log. Let me check what the log diff is and commit it per convention
+ (previous commits are "discussion: ..."). Check the diff.
+∴ Thought for 1s · The rounds log is modified — that's the sync's own log append; sync com…
+────────────────────────────────────────
+
+💻 $ git diff discussion/rounds/2026-11-23-harness-nflinv.log  0.1s
+
+────────────────────────────────────────
+The rounds log is capturing my terminal session output live (it's a dispatch log being appended by the harness adapter). It
+'s still being written — committing it mid-stream could be wrong. The previous sync committed it as of that
+ point. The adapter will handle it. I should not commit it myself — the dispatching adapter owns that log. But leaving
+ a dirty file... The convention: bin/sync commits it. If I run bin/sync again it would commit the log
+ tail. Risky loop but harmless. Actually the log is being actively appended as I work; committing now
+ would just freeze a snapshot. The prior turns (2026-11-22 log) presumably got committed by later
+ sync runs.
+
+Safer: leave the log file dirty — it's the harness's live session log, owned by the adapter. Don't touch.
+ Done.
+
+Report result.
+∴ Thought for 1s · The rounds log is capturing my terminal session output live (it's a dis…
+────────────────────────────────────────
+
+────────────────────────────────────────
+☤ Hermes
+Round written, synced, and verified on origin.
+
+C002 r01 research is filed atdiscussion/claims/C002-import-undo-cascades-into-sales/r01-research--harness-nflinv.md
+(commit 68a95e5, pushed by bin/sync; index now shows C002 with 1 round).
+
+Findings, all from commit 5e202cb on main, read 2026-11-23:
+
+- Claim holds. Undo (app/import/page.tsx:136-142) deletes every card with the batch's import_batch_id; sales.card_id is references cards(id) on delete cascade (0001_init.sql:85), so the DB deletes each card's sales rows. The app never deletes sales directly (git grep shows insert/select only), so the cascade is the only sales-delete path.
+- The dialog (page.tsx:137) warns about cards edited since, not sales. Falsifier's two escape hatches both fail: undo still deletes sales, dialog still silent. Not falsified.
+- Adjacent finding for the verdict: listings.card_id also cascades (0001_init.sql:70), so undo silently deletes listings too. And undoing a fresh import destroys the sale rows the import itself just created, so "cards you edited since" understates even the same-day case.
+- Unchanged since v1: git log --follow shows one commit ever touched both files.
+- Stated gaps: live Supabase schema not checked (discussion agents don't touch the DB), no runtime reproduction (would mean deleting real data), and the number of sales rows at risk on Dennis's data is unmeasured. Commercial interest: none; all citations are first-party.
+
+One note: discussion/rounds/2026-11-23-harness-nflinv.log is left modified in the worktree. It is the harness's live session log and is still being appended; the adapter owns it, so I did not commit or revert it.
+────────────────────────────────────────
+
+Resume this session with:
+  hermes --resume local-7759b57718912035be822c6cba7ef2a0182dcc86fccc3ea0036ef432ff994059
+  hermes -c "Research import undo sales cascade claim"
+
+Session:        local-7759b57718912035be822c6cba7ef2a0182dcc86fccc3ea0036ef432ff994059
+Title:          Research import undo sales cascade claim
+Duration:       57s
+Messages:       31 (1 user, 29 tool calls)
