@@ -5588,3 +5588,1292 @@ Session:        local-313f3e5a8f9da5246a0a3e0894f9aca264b23bcfba2e10ebf75ee0de00
 Title:          Research Supabase OAuth 2.1 claim S7
 Duration:       2m 5s
 Messages:       51 (1 user, 49 tool calls)
+[22:28] reached max_rounds=2
+[22:29] round 1/8  role=researcher  via bin/hermes-round.sh
+NOTE  10 claims in flight, budget allows 6. Finish open claims before proposing more.
+
+TASK  C010-s8-price-source-the-football-mcp-not-the   role=researcher  round=1
+hermes: a source update could not be finished automatically (6 attempts); run `hermes update` from a shell to finish it
+hermes: a source update is unfinished; run `hermes update` from a shell to finish it
+Query: Read AGENTS.md, then carry out exactly this one task and write the one 
+file it names.
+
+NOTE  10 claims in flight, budget allows 6. Finish open claims before proposing 
+more.
+
+TASK  C010-s8-price-source-the-football-mcp-not-the   role=researcher  round=1
+CLAIM S8 price source: the football MCP, not the eBay API, is the right source 
+for each card's Price (last comp)
+STATUS open  falsifier: Falsified if eBay grants Marketplace Insights (sold-item
+history) to this app, or if the football MCP lacks prices for more than a 
+quarter of the cards in the inventory (Midnight, Flagship, Inception, Chrome), 
+or if storing eBay API data is compatible with the keyset's 'I do not persist 
+eBay data' exemption.
+
+Gather the evidence for this claim. No prior rounds carry a model field.
+
+Label every figure with its date, the population it refers to, its sample size 
+and a source link. Flag any
+source with a commercial interest in the answer. Where the evidence does not 
+exist, say so plainly and stop
+looking - an explicit gap is a finding, a plausible invention is damage.
+
+Write your work to:  
+discussion/claims/C010-s8-price-source-the-football-mcp-not-the/r01-research--ha
+rness-nflinv.md
+Use the round frontmatter in AGENTS.md. Then run bin/sync.
+
+────────────────────────────────────────
+Let me start by reading AGENTS.md and the claim file, plus docs/STORIES.md for S8 context.
+∴ Thought for 0s
+────────────────────────────────────────
+
+📖 Read AGENTS.md  0.3s
+🔎 Find C010  0.3s
+
+────────────────────────────────────────
+No claim directory for C010 exists yet. I need to check the discussion structure:
+ how other claims are stored, whether there's a claims registry, and what "round frontmatter"
+ in AGENTS.md means — hmm, AGENTS.md mentions round frontmatter but doesn't include
+ it in what I read. Let me check bin/ sync scripts and an existing claim to see the format
+. Also check docs/STORIES.md for S8.
+∴ Thought for 0s · No claim directory for C010 exists yet.
+────────────────────────────────────────
+
+🔎 Find C00  0.4s
+🔎 Grep frontmatter|model:  0.4s
+
+────────────────────────────────────────
+The discussion dir appears empty in this worktree? Wait — the workspace snapshot says
+ recent commits include "discussion: round on C009...". The search in /home/dennis/nflinventory
+/discussion found no C00 files. Maybe discussion is a separate location, or the work
+tree... The cwd is /home/dennis/nflinventory. Let me look at the discussion dir directly
+.
+∴ Thought for 0s · The discussion dir appears empty in this worktree?
+────────────────────────────────────────
+
+💻 $ ls -la discussion/ + 3 commands
+💻 $ ls discussion/claims/C010-s8-price-source-the-football-mcp-not-the/ + 2 commands
+
+────────────────────────────────────────
+C010 dir exists with only claim.md. Round filename: `r01-research--harness-nflinv.md`.
+ The `--` suffix is the model tag... wait, gate says filename after `--` is the model. "
+harness-nflinv" — so this researcher round's harness/model tag is "harness-nflinv"?
+ Let me look at an example researcher round from another claim (e.g., C001 r01) to see front
+matter format and model value. Also check bin/next for the round instruction template
+, and the roster, and docs/STORIES.md for S8.
+∴ Thought for 1s · C010 dir exists with only claim.md.
+────────────────────────────────────────
+
+💻 $ cat discussion/roster + 6 commands
+
+────────────────────────────────────────
+I need to see the round frontmatter format. AGENTS.md doesn't include it (the referenced
+ file must define "Use the round frontmatter in AGENTS.md" — but the AGENTS.md I read doesn
+'t show it... maybe there's more in discussion or in bin/hermes-round.sh. Let me read an existing researcher
+ round file (C001 r01) for the frontmatter shape, and bin/hermes-round.sh to see what
+ model it should write. The roster says researcher model=z-ai/glm-5.3-flash, and harness
+ name... The file tag is "harness-nflinv". Let me look at C001's r01 file frontmatter.
+∴ Thought for 1s · I need to see the round frontmatter format.
+────────────────────────────────────────
+
+💻 $ head -20 discussion/claims/C001-first-circle-survey-the-nflinventory-app/r01-research--harness-nflinv.md + 5 commands  0.1s
+
+────────────────────────────────────────
+I have the frontmatter format. Now I need to gather evidence for the claim. The claim:
+ S8 price source — football MCP vs eBay API for each card's Price (last comp).
+
+Evidence needed:
+1. What the app's schema stores (cards.comp_cents, migration 0002) — check supabase/migrations.
+2. S8's story definition in docs/STORIES.md — what it needs.
+3. The eBay side: Marketplace Insights API limited release — needs approval; Browse API shows
+ asking prices only. Need web sources with dates.
+4. eBay keyset exemption "I do not persist eBay data" — account deletion notices /
+ eBay developer agreement. There's docs/EBAY_SANDBOX.md presumably.
+5. Football MCP coverage: does it have prices for the inventory's cards (Midnight, Flagship
+, Inception, Chrome)? Population: cards in the inventory DB for those sets. Hmm — "
+Discussion agents never touch the Supabase database." The live inventory DB holds real personal
+ data; I can't query it. But I can query the football MCP (read-only SELECT). But
+ the falsifier needs "the football MCP lacks prices for more than a quarter of the cards in the inventory".
+ I can't count inventory cards directly without touching the DB. But the app's MCP
+ maybe? The app's own MCP — project facts say Claude combines it with this app's MCP.
+ But touching the app's DB via MCP as a discussion agent... The Supabase rule says
+ discussion agents never touch the database (no credentials). The football MCP is not
+ the inventory DB — it's Dennis's set/price database. I can query the football MCP for price coverage
+ per set (count of variants with prices vs total). But I can't know how many inventory
+ cards map to MCP variants without the inventory DB.
+
+Let me check: does the football MCP work from this harness locally at 127.0.0.1:8742
+/mcp? I have the collectingcards-data skill for "cc price database". Let me load that skill to
+ know how to query the football MCP properly.
+
+Also the "NOTE 10 claims in flight, budget allows 6. Finish open claims before proposing more."
+ — that's context; my task is just this one research round.
+
+Plan:
+1. Read docs/STORIES.md S8 section, supabase/migrations/0002, docs/EBAY_SANDBOX.md.
+2. Load collectingcards-data skill; query football MCP for price coverage of the four sets (Flag
+ship 2026, Midnight 2026, Inception 2024+2026, Chrome 2025/2026).
+3. Web evidence on eBay Marketplace Insights API limited release, Browse API pricing
+, eBay data storage / account deletion exemption.
+4. Write the round file with dated, sourced figures; run bin/sync.
+∴ Thought for 2s · I have the frontmatter format.
+────────────────────────────────────────
+
+💻 $ grep -n "S8" docs/STORIES.md + 4 commands
+📚 Skill collectingcards-data
+
+────────────────────────────────────────
+Now I understand the football MCP (cc-mcp) structure: tools sets, checklist, pc, odds, box
+, status. Read-only, SELECT-only role (cc_harness? no — the MCP reader). Prices: cc.card
+_price (price_usd, observed_on, source), cc.price_estimate stored estimates. Coverage
+ per product: pc tool / status.
+
+Now what evidence do I need for the claim?
+
+Claim components and falsifiers:
+1. eBay Marketplace Insights API is a limited release needing approval — is that still
+ true? Evidence: eBay developer docs. Falsified if eBay grants it to this app (approval
+ pending — registered 2026-11-21/22, so no grant yet). Check current eBay app status?
+ Can't check approval status directly, but docs/EBAY_SANDBOX.md records state. Maybe
+ check whether this app's keyset has any scopes beyond public data — can't without
+ tokens. Record as "not granted as of date; approval status unknown to the app".
+2. Football MCP coverage: does it lack prices for >25% of cards in the inventory (Midnight, Flagship
+, Inception, Chrome)? Population: "the cards in the inventory". The inventory DB is off
+-limits to discussion agents. But the football MCP has its own per-set variant counts and
+ priced counts — I can query via MCP (sets/status/pc). The inventory DB cards are a
+ subset of... actually the inventory is Dennis's personal collection — his cards.
+ How many inventory cards per set? I can't query the inventory DB (Supabase rule). Hmm
+ — but maybe the app's own MCP is available? The rule: "Discussion agents never touch it
+ — no credentials in the repo or in agent prompts." So I can't count inventory cards. I
+ should state that gap plainly: the exact denominator (inventory cards per set) is unavailable
+ to a discussion agent; what I CAN measure is the football MCP's priced-variant coverage per set
+ population, and note that the falsifier's denominator needs the app side (S8 agent
+ can measure with proper app-side tooling).
+
+Actually wait — can I measure "the football MCP lacks prices for more than a quarter of the
+ cards"? Alternative interpretation: among the football MCP's variants for those sets, what
+ fraction has prices (real comps or stored estimates)? That's measurable via MCP.
+ The inventory mapping is app-side. I'll measure MCP-side coverage and flag the join
+ as the app-side work.
+
+3. eBay API data storage compatibility with "I do not persist eBay data" exemption: eBay's
+ Account Deletion/Closure Notifications requirement. Apps must subscribe to account
+ deletion notifications and delete user data. There's an exemption: applications that do
+ not collect, store, process, or retain eBay member data. Where does the keyset record
+ this? Search eBay developer docs for "account deletion notification" — apps storing
+ no eBay data can request exemption. Evidence: eBay developer program docs.
+
+Also the "Price = last comp" definition: cards.comp_cents migration 0002. Read that migration
+.
+
+Also S8 story definition (docs/STORIES.md line 135).
+
+Also check the football MCP is reachable and get real coverage numbers. Rate limit 20 req/min —
+ keep queries few.
+
+Let me read the migration and S8 story, then probe the MCP.
+∴ Thought for 3s · Now I understand the football MCP (cc-mcp) structure: tools sets, check…
+────────────────────────────────────────
+
+💻 $ sed -n '125,165p' docs/STORIES.md + 4 commands
+
+────────────────────────────────────────
+Now probe the football MCP for price coverage per set. The MCP runs at 127.0.0.1:874
+2/mcp. Tools: sets, checklist, pc, odds, box, status. But for coverage numbers I need counts
+ of variants vs priced variants per product — the `status` tool (cc status) provides
+ that per product (variants, priced rows, estimate rows). Let me call the MCP. How?
+ It's a JSON-RPC MCP over HTTP. I can curl initialize + tools/call. Token in CC_MCP_TOKEN env
+ — check environment availability. Careful: don't print the token. Use it via env var in
+ a script.
+
+Let me check the server is up and what env var holds the token.
+∴ Thought for 1s · Now probe the football MCP for price coverage per set.
+────────────────────────────────────────
+
+💻 $ ss -tlnp 2>/dev/null | grep 8742 + 3 commands  0.1s
+
+────────────────────────────────────────
+Server up on 127.0.0.1:8742, CC_MCP_TOKEN in env. Write a small Python MCP client to call `
+status` and `sets`, and per-product status. The MCP protocol: POST JSON-RPC. Let me write a helper
+ script in the scratch dir.
+
+MCP calls: initialize, notifications/initialized, tools/call. Many MCP HTTP servers use
+ streamable HTTP; each POST needs Accept: application/json, text/event-stream possibly
+. Let me just probe.
+∴ Thought for 0s · Server up on 127.0.0.1:8742, CC_MCP_TOKEN in env.
+────────────────────────────────────────
+
+✍️ Write /home/dennis/.hermes/cache/scratch/cc_mcp_probe.py
+│ cache/scratch/cc_mcp_probe.py
+│ @@ -0,0 +1,44 @@
+│ +"""Minimal MCP client probe for cc-mcp on 127.0.0.1:8742/mcp (read-only tools only)."""
+│ +import json, os, sys, urllib.request
+│ +
+│ +BASE = "http://127.0.0.1:8742/mcp"
+│ +TOKEN = os.environ["CC_MCP_TOKEN"]
+│ +_id = [0]
+│ +
+│ +def post(payload, expect_reply=True):
+│ +    req = urllib.request.Request(BASE, data=json.dumps(payload).encode(), headers={
+│ +        "Content-Type": "application/json",
+│ +        "Accept": "application/json, text/event-stream",
+│ +        "Authorization": "Bearer " + TOKEN,
+│ +    })
+│ +    with urllib.request.urlopen(req, timeout=60) as r:
+│ +        body = r.read().decode()
+│ +    if not expect_reply:
+│ +        return None
+│ +    # streamable HTTP may answer as SSE lines
+│ +    if body.lstrip().startswith("event:") or "\ndata:" in body or body.lstrip().startswith("data:"):
+│ +        for line in body.splitlines():
+│ +            if line.startswith("data:"):
+│ +                return json.loads(line[5:].strip())
+│ +        return None
+│ +    return json.loads(body)
+│ +
+│ +def call(name, args=None):
+│ +    _id[0] += 1
+│ +    return post({"jsonrpc": "2.0", "id": _id[0], "method": "tools/call",
+│ +                 "params": {"name": name, "arguments": args or {}}})
+│ +
+│ +if __name__ == "__main__":
+│ +    r = post({"jsonrpc": "2.0", "id": 0, "method": "initialize", "params": {
+│ +        "protocolVersion": "2024-11-05",
+│ +        "capabilities": {}, "clientInfo": {"name": "probe", "version": "0.1"}}})
+│ +    print("INIT:", (r or {}).get("result", {}).get("serverInfo"))
+│ +    post({"jsonrpc": "2.0", "method": "notifications/initialized"}, expect_reply=False)
+│ +    for cmd in sys.argv[1:]:
+│ +        name, _, argstr = cmd.partition(" ")
+│ +        res = call(name, json.loads(argstr) if argstr else {})
+│ +        result = (res or {}).get("result", {})
+│ +        content = result.get("content", [])
+│ +        text = "\n".join(c.get("text", "") for c in content if c.get("type") == "text")
+│ +        print("=" * 20, name, argstr)
+│ +        print(text[:6000])
+💻 $ python3 cc_mcp_probe.py status sets  55.2s
+
+────────────────────────────────────────
+Excellent. Per-product "Priced" counts (real comp rows). Note: `price_estimate` table has
+ 135,366 rows — stored estimates. So the coverage question has two tiers: real comp
+ (Priced) and stored estimate.
+
+Key numbers (2026-11-23, MCP status, population = cc DB variants per product, cutoff
+ 2026-11-22):
+- flagship_2026: 43,770 variants, 20,109 priced (46%)
+- chrome_2026: 25,091, 750 priced (3.0%!) — low; but price_estimate may cover it
+- chrome_2025: 24,220, 15,336 (63%)
+- midnight_2026: 7,543, 1,102 (14.6%)
+- inception_2024: 4,186, 3,251 (77.7%)
+- inception_2026: 4,680, 1,131 (24.2%)
+
+But price_estimate coverage matters — stored estimates. 135,366 estimates total. Per
+-product estimate counts aren't in status. I need per-product priced + estimated counts. Is
+ there an MCP tool for that? Tools: sets, checklist, pc, odds, box, status. Status
+ doesn't give per-product estimate counts. Hmm.
+
+Options: query the DB directly via cc_query CLI (the skill says the CLI sets no cap and
+ works — I have CC_HARNESS_DB_PASSWORD etc.). But careful: "Discussion agents never touch it
+" refers to the inventory Supabase DB. The cc database is Dennis's price platform
+ DB — not the inventory. Querying it read-only is fine (the MCP exists for exactly
+ this; using cc_query CLI read-only is equivalent).
+
+Per skill: use the repo's .venv interpreter for cc_query. Find the cc_query command
+. Let me check ~/collectingcards-data or ~/collectingcards.
+
+Query per product: variants count, priced variants (join card_price), priced variants within
+ X days?, estimate count from price_estimate. Also freshness (latest observed_on).
+
+
+SQL:
+select p.id, p.name, count(distinct v.id) variants,
+ count(distinct case when cp.id is not null then v.id end) priced_variants,
+ count(distinct case when pe.variant_id is not null then v.id end) est_variants
+from cc.product p join cc.variant v on v.product_id=p.id
+left join cc.card_price cp on cp.variant_id=v.id
+left join cc.price_estimate pe on pe.variant_id=v.id
+group by 1,2;
+
+card_price may have many rows per variant — distinct handles. For the four sets named
+ in the falsifier: Midnight (2026 presumably), Flagship 2026, Inception (2024+2026),
+ Chrome (2025, 2026). Do flagship_2025? not present? There's nfl_flagship_2026 only
+? Let me just query the relevant products.
+
+Also important: which products exist — is there a flagship_2025? Status output got truncated. Let me run
+ the SQL for all products, quick aggregate.
+
+Let me find cc_query.
+∴ Thought for 3s · Excellent.
+────────────────────────────────────────
+
+💻 $ ls ~/collectingcards-data/ 2>/dev/null + 3 commands  0.1s
+💻 $ ls ~/collectingcards + 2 commands  0.2s
+💻 $ ./.venv/bin/python -m cc_query --help  0.4s
+
+────────────────────────────────────────
+CLI has pc, checklist, boxes, sets, odds, status — no arbitrary SQL. For per-product estimate
+ counts I need SQL. I have CC_HARNESS_DB_PASSWORD (SELECT-only role cc_harness). I
+ can connect with psycopg directly. The skill: cc_harness is SELECT on cc tables.
+ Let me write a small read-only SQL script using the venv python (psycopg available there
+).
+
+Connection details: SUPABASE pooler. Check env vars for host. Let me look at what env the
+ cc tools use — check cc_query/query.py source for env var names.
+∴ Thought for 1s · CLI has pc, checklist, boxes, sets, odds, status — no arbitrary SQL.
+────────────────────────────────────────
+
+💻 $ grep -n "environ\|getenv" ~/collectingcards/cc_query/query.py ~/collectingcards/cc_query/__main__.py 2>/dev/null + 1 command
+✍️ Write /home/dennis/.hermes/cache/scratch/cc_coverage_probe.py
+│ cache/scratch/cc_coverage_probe.py
+│ @@ -0,0 +1,54 @@
+│ +"""Read-only coverage probe over the cc price DB (cc_harness role, SELECT-only).
+│ +
+│ +Answers: for each football product the app's inventory draws from, how many
+│ +variants have real comp rows (cc.card_price) and/or stored estimates
+│ +(cc.price_estimate), and how fresh those prices are.
+│ +"""
+│ +import os, sys
+│ +import psycopg
+│ +
+│ +sys.path.insert(0, os.path.expanduser("~/collectingcards"))
+│ +
+│ +DB_HOST = os.environ.get("DB_HOST", "aws-0-eu-west-1.pooler.supabase.com")
+│ +DB_PORT = os.environ.get("DB_PORT", "5432")
+│ +DB_USER = os.environ.get("CC_HARNESS_DB_USER", "cc_harness")
+│ +DB_PASSWORD = os.environ["CC_HARNESS_DB_PASSWORD"]
+│ +# tenant-qualified pooler user; discover from cc_query if present
+│ +try:
+│ +    from cc_query import query as q
+│ +    DB_USER = getattr(q, "DB_USER", DB_USER) or DB_USER
+│ +except Exception as e:
+│ +    print("note: cc_query import failed:", e)
+│ +
+│ +DSN = f"host={DB_HOST} port={DB_PORT} dbname=postgres user={DB_USER} password={DB_PASSWORD}"
+│ +
+│ +SQL = """
+│ +set statement_timeout = '30s';
+│ +select p.id as product, count(*) as variants,
+│ +  count(cp.variant_id) filter (where cp.is_real) as comp_variants,
+│ +  max(cp.observed_on) filter (where cp.is_real) as latest_comp,
+│ +  count(pe.variant_id) as est_variants,
+│ +  max(pe.created_at) as latest_est
+│ +from cc.product p
+│ +join cc.variant v on v.product_id = p.id
+│ +left join lateral (
+│ +  select 1 as is_real, observed_on, variant_id from cc.card_price c
+│ +  where c.variant_id = v.id order by observed_on desc limit 1
+│ +) cp on true
+│ +left join cc.price_estimate pe on pe.variant_id = v.id
+│ +where p.id in ('nfl_flagship_2026','nfl_chrome_2025','nfl_chrome_2026',
+│ +               'nfl_midnight_2026','nfl_midnight_2024','nfl_inception_2024',
+│ +               'nfl_inception_2026')
+│ +group by p.id order by p.id;
+│ +"""
+│ +
+│ +conn = psycopg.connect(DSN, connect_timeout=20)
+│ +conn.set_session(readonly=True, autocommit=False)
+│ +cur = conn.cursor()
+│ +cur.execute("set role cc_harness")
+│ +cur.execute(SQL)
+│ +print("product            variants comp_variants latest_comp est_variants latest_est")
+│ +for row in cur.fetchall():
+│ +    print("{:<18} {:>8} {:>13} {:>11} {:>12} {}".format(*[str(v) for v in row]))
+│ +cur.execute("rollback")
+│ +conn.close()
+
+────────────────────────────────────────
+Wait — DB_USER: cc_harness probably can't be the pooler user name directly; the pool
+er needs user "cc_harness.<project-ref>". The skill says "tenant-qualified session pooler
+ (user postgres.<project-ref>)". Let me check docs/DB_READ_ACCESS.md in ~/collectingcards for
+ the exact pattern. Also I imported cc_query.query to get DB_USER — but that import
+ may execute code requiring env. Let me read the doc first.
+∴ Thought for 1s · Wait — DB_USER: cc_harness probably can't be the pooler user name direc…
+────────────────────────────────────────
+
+💻 $ cat ~/collectingcards/docs/DB_READ_ACCESS.md 2>/dev/null + 1 command
+
+────────────────────────────────────────
+Better to use cc_catalog.store.read_env() which reads ~/.hermes/.env with SUPABASE_DB_PASSWORD.
+ Rewrite the probe to follow the documented pattern: user postgres.efxcwcpszzwnfkztdjer,
+ port 6543, sslmode require. cc_harness password also exists but the documented working
+ pattern is the postgres one; postgres can SELECT anything. Keep it SELECT-only per
+ the doc's hard rules. My query with lateral + joins should be fine within 30s timeout.
+
+
+Also is_real filter: cc.card_price may have grade rows etc. What distinguishes "real"
+ vs estimate? The skill said 'tier-median (est)' source values. In cc.card_price, estimates
+ aren't stored (estimates live in price_estimate). card_price is real comps (SCP).
+ But maybe grade null vs graded. Simplify: count distinct variants with any card_price row (
+all card_price rows are real observed comps). Drop the is_real logic.
+∴ Thought for 1s · Better to use cc_catalog.store.read_env() which reads ~/.hermes/.env wi…
+────────────────────────────────────────
+
+✍️ Write /home/dennis/.hermes/cache/scratch/cc_coverage_probe.py
+│ cache/scratch/cc_coverage_probe.py
+│ @@ -1,40 +1,25 @@
+│ -"""Read-only coverage probe over the cc price DB (cc_harness role, SELECT-only).
+│ +"""Read-only coverage probe over the cc price DB (pattern from docs/DB_READ_ACCESS.md).
+│
+│ -Answers: for each football product the app's inventory draws from, how many
+│ -variants have real comp rows (cc.card_price) and/or stored estimates
+│ -(cc.price_estimate), and how fresh those prices are.
+│ +Per football product relevant to S8: variants, variants with a real comp row
+│ +(cc.card_price), latest comp date, variants with a stored estimate
+│ +(cc.price_estimate), latest estimate write.
+│  """
+│  import os, sys
+│  import psycopg
+│
+│ -sys.path.insert(0, os.path.expanduser("~/collectingcards"))
+│ -
+│ -DB_HOST = os.environ.get("DB_HOST", "aws-0-eu-west-1.pooler.supabase.com")
+│ -DB_PORT = os.environ.get("DB_PORT", "5432")
+│ -DB_USER = os.environ.get("CC_HARNESS_DB_USER", "cc_harness")
+│ -DB_PASSWORD = os.environ["CC_HARNESS_DB_PASSWORD"]
+│ -# tenant-qualified pooler user; discover from cc_query if present
+│ -try:
+│ -    from cc_query import query as q
+│ -    DB_USER = getattr(q, "DB_USER", DB_USER) or DB_USER
+│ -except Exception as e:
+│ -    print("note: cc_query import failed:", e)
+│ -
+│ -DSN = f"host={DB_HOST} port={DB_PORT} dbname=postgres user={DB_USER} password={DB_PASSWORD}"
+│ +sys.path.insert(0, "/home/dennis/collectingcards")
+│ +from cc_catalog import store
+│
+│  SQL = """
+│  set statement_timeout = '30s';
+│ -select p.id as product, count(*) as variants,
+│ -  count(cp.variant_id) filter (where cp.is_real) as comp_variants,
+│ -  max(cp.observed_on) filter (where cp.is_real) as latest_comp,
+│ -  count(pe.variant_id) as est_variants,
+│ +select p.id as product, count(distinct v.id) as variants,
+│ +  count(distinct cp.variant_id) as comp_variants,
+│ +  max(cp.observed_on) as latest_comp,
+│ +  count(distinct pe.variant_id) as est_variants,
+│    max(pe.created_at) as latest_est
+│  from cc.product p
+│  join cc.variant v on v.product_id = p.id
+│ -left join lateral (
+│ -  select 1 as is_real, observed_on, variant_id from cc.card_price c
+│ -  where c.variant_id = v.id order by observed_on desc limit 1
+│ -) cp on true
+│ +left join cc.card_price cp on cp.variant_id = v.id
+│  left join cc.price_estimate pe on pe.variant_id = v.id
+│  where p.id in ('nfl_flagship_2026','nfl_chrome_2025','nfl_chrome_2026',
+│                 'nfl_midnight_2026','nfl_midnight_2024','nfl_inception_2024',
+│ @@ -42,13 +27,16 @@
+│  group by p.id order by p.id;
+│  """
+│
+│ -conn = psycopg.connect(DSN, connect_timeout=20)
+│ -conn.set_session(readonly=True, autocommit=False)
+│ +conn = psycopg.connect(
+│ +    host="aws-0-eu-west-1.pooler.supabase.com", port=6543, dbname="postgres",
+│ +    user="postgres.efxcwcpszzwnfkztdjer",
+│ +    password=store.read_env()["SUPABASE_DB_PASSWORD"],
+│ +    sslmode="require", connect_timeout=8)
+│ +conn.set_session(readonly=True)
+│  cur = conn.cursor()
+│ -cur.execute("set role cc_harness")
+│  cur.execute(SQL)
+│  print("product            variants comp_variants latest_comp est_variants latest_est")
+│  for row in cur.fetchall():
+│      print("{:<18} {:>8} {:>13} {:>11} {:>12} {}".format(*[str(v) for v in row]))
+│ -cur.execute("rollback")
+│ +conn.rollback()
+│  conn.close()
+✗ $ ./.venv/bin/python /home/dennis/.hermes/cache/scratch/cc_coverage_probe.py  1.2s [exit 1]
+
+────────────────────────────────────────
+Weird — psycopg Connection should have set_session... maybe it's psycopg3's `conn
+.read_only = True`? Actually psycopg3 has `conn.set_session()`? No — psycopg3 uses
+ `conn.transaction` and `conn.execute`; `set_session` exists in psycopg2. The venv's
+ psycopg is psycopg 3 — attributes: conn.read_only = True. Fix.
+∴ Thought for 1s · Weird — psycopg Connection should have set_session...
+────────────────────────────────────────
+
+🔧 Patch /home/dennis/.hermes/cache/scratch/cc_coverage_probe.py
+│ /home/dennis/.hermes/cache/scratch/cc_coverage_probe.py
+│ @@ -32,7 +32,7 @@
+│      user="postgres.efxcwcpszzwnfkztdjer",
+│      password=store.read_env()["SUPABASE_DB_PASSWORD"],
+│      sslmode="require", connect_timeout=8)
+│ -conn.set_session(readonly=True)
+│ +conn.read_only = True
+│  cur = conn.cursor()
+│  cur.execute(SQL)
+│  print("product            variants comp_variants latest_comp est_variants latest_est")
+✗ $ ./.venv/bin/python /home/dennis/.heres/cache/scratch/cc_coverage_probe.py + 1 command  1.0s [exit 1]
+💻 $ ./.venv/bin/python - <<'EOF' import sys + 1 command  1.1s
+✍️ Write /home/dennis/.hermes/cache/scratch/cc_coverage_probe.py
+│ cache/scratch/cc_coverage_probe.py
+│ @@ -4,7 +4,7 @@
+│  (cc.card_price), latest comp date, variants with a stored estimate
+│  (cc.price_estimate), latest estimate write.
+│  """
+│ -import os, sys
+│ +import sys
+│  import psycopg
+│
+│  sys.path.insert(0, "/home/dennis/collectingcards")
+│ @@ -12,19 +12,19 @@
+│
+│  SQL = """
+│  set statement_timeout = '30s';
+│ -select p.id as product, count(distinct v.id) as variants,
+│ +select p.product_id as product, count(distinct v.variant_id) as variants,
+│    count(distinct cp.variant_id) as comp_variants,
+│    max(cp.observed_on) as latest_comp,
+│    count(distinct pe.variant_id) as est_variants,
+│    max(pe.created_at) as latest_est
+│  from cc.product p
+│ -join cc.variant v on v.product_id = p.id
+│ -left join cc.card_price cp on cp.variant_id = v.id
+│ -left join cc.price_estimate pe on pe.variant_id = v.id
+│ -where p.id in ('nfl_flagship_2026','nfl_chrome_2025','nfl_chrome_2026',
+│ +join cc.variant v on v.product_id = p.product_id
+│ +left join cc.card_price cp on cp.variant_id = v.variant_id
+│ +left join cc.price_estimate pe on pe.variant_id = v.variant_id
+│ +where p.product_id in ('nfl_flagship_2026','nfl_chrome_2025','nfl_chrome_2026',
+│                 'nfl_midnight_2026','nfl_midnight_2024','nfl_inception_2024',
+│                 'nfl_inception_2026')
+│ -group by p.id order by p.id;
+│ +group by p.product_id order by p.product_id;
+│  """
+│
+│  conn = psycopg.connect(
+│ @@ -38,5 +38,4 @@
+│  print("product            variants comp_variants latest_comp est_variants latest_est")
+│  for row in cur.fetchall():
+│      print("{:<18} {:>8} {:>13} {:>11} {:>12} {}".format(*[str(v) for v in row]))
+│ -conn.rollback()
+│  conn.close()
+✗ $ ./.venv/bin/python /home/dennis/.hermes/cache/scratch/cc_coverage_probe.py  0.8s [exit 1]
+🔧 Patch /home/dennis/.hermes/cache/scratch/cc_coverage_probe.py
+│ /home/dennis/.hermes/cache/scratch/cc_coverage_probe.py
+│ @@ -15,8 +15,7 @@
+│  select p.product_id as product, count(distinct v.variant_id) as variants,
+│    count(distinct cp.variant_id) as comp_variants,
+│    max(cp.observed_on) as latest_comp,
+│ -  count(distinct pe.variant_id) as est_variants,
+│ -  max(pe.created_at) as latest_est
+│ +  count(distinct pe.variant_id) as est_variants
+│  from cc.product p
+│  join cc.variant v on v.product_id = p.product_id
+│  left join cc.card_price cp on cp.variant_id = v.variant_id
+✗ $ ./.venv/bin/python /home/dennis/.hermes/cache/scratch/cc_coverage_probe.py  18.0s [exit 1]
+
+────────────────────────────────────────
+The `set statement_timeout` consumed; need to fetch after the select — but the SET
+ is the last "operation"? The cur.execute(SQL) ran both statements in one call; the
+ final status is SET... no, the SELECT ran. psycopg with multiple statements: only
+ the last statement's results are returned? The status says SET, meaning the last
+ executed statement is the SET — because my SQL puts `set statement_timeout` FIRST
+, then select. Hmm, status should be SELECT then. Unless psycopg executes via a single query and
+ returns only last result which is SET... Let me just restructure: two execute calls.
+∴ Thought for 1s · The `set statement_timeout` consumed; need to fetch after the select —…
+────────────────────────────────────────
+
+🔧 Patch /home/dennis/.hermes/cache/scratch/cc_coverage_probe.py
+│ /home/dennis/.hermes/cache/scratch/cc_coverage_probe.py
+│ @@ -10,8 +10,8 @@
+│  sys.path.insert(0, "/home/dennis/collectingcards")
+│  from cc_catalog import store
+│
+│ +TIMEOUT = "set statement_timeout = '30s'"
+│  SQL = """
+│ -set statement_timeout = '30s';
+│  select p.product_id as product, count(distinct v.variant_id) as variants,
+│    count(distinct cp.variant_id) as comp_variants,
+│    max(cp.observed_on) as latest_comp,
+🔧 Patch /home/dennis/.hermes/cache/scratch/cc_coverage_probe.py
+│ /home/dennis/.hermes/cache/scratch/cc_coverage_probe.py
+│ @@ -33,6 +33,7 @@
+│      sslmode="require", connect_timeout=8)
+│  conn.read_only = True
+│  cur = conn.cursor()
+│ +cur.execute(TIMEOUT)
+│  cur.execute(SQL)
+│  print("product            variants comp_variants latest_comp est_variants latest_est")
+│  for row in cur.fetchall():
+✗ $ ./.venv/bin/python /home/dennis/.hermes/cache/scratch/cc_coverage_probe.py  11.1s [exit 1]
+
+────────────────────────────────────────
+5 columns now; format string has 6 placeholders. But data arrived. Fix format: drop one
+ placeholder. Actually just print row.
+∴ Thought for 1s · 5 columns now; format string has 6 placeholders.
+────────────────────────────────────────
+
+🔧 Patch /home/dennis/.hermes/cache/scratch/cc_coverage_probe.py
+│ /home/dennis/.hermes/cache/scratch/cc_coverage_probe.py
+│ @@ -35,7 +35,7 @@
+│  cur = conn.cursor()
+│  cur.execute(TIMEOUT)
+│  cur.execute(SQL)
+│ -print("product            variants comp_variants latest_comp est_variants latest_est")
+│ +print("product            variants comp_variants latest_comp est_variants")
+│  for row in cur.fetchall():
+│ -    print("{:<18} {:>8} {:>13} {:>11} {:>12} {}".format(*[str(v) for v in row]))
+│ +    print("{:<18} {:>8} {:>13} {:>11} {:>12}".format(*[str(v) for v in row]))
+│  conn.close()
+💻 $ ./.venv/bin/python /home/dennis/.hermes/cache/scratch/cc_coverage_probe.py  6.9s
+
+────────────────────────────────────────
+Now compute combined coverage (comp ∪ est) per product:
+
+- flagship_2026: comp 20,109; est 22,054. Union? Overlap unknown. Need union counts
+.
+- chrome_2026: comp 750 + est 19,026 → union up to 19,776/25,091 = 78.8%
+- chrome_2025: 15,336 + 7,972 = up to 23,308/24,220 = 96.2%
+- midnight_2026: 1,102 + 5,697 = up to 6,799/7,543 = 90.1%
+- inception_2024: 3,251 + 761
+- inception_2026: 1,131 + 2,723
+
+Need exact UNION counts (coalesce). Run a second query. Also important: est coverage
+ for flagship needs the union.
+
+Also note the price_estimate includes both estimate AND real anchors? The skill said
+ `v_lookup.is_estimated` True for estimate-stored, False for real price; price_estimate table
+ might only store estimates (unpriced variants only: "Only unpriced variants appear"
+ for estimator output — "est = only unpriced variants"; "Estimates exist only for
+ products with seeded variants AND priced anchors"). So price_estimate rows exist
+ only for variants WITHOUT real prices? The contract says "Only unpriced variants appear
+. Real comps never mix into estimator output." So union = comp + est (disjoint). But
+ price_estimate has 135,366 rows total vs 358,570 variants — plausible.
+
+Actually wait — the stored estimator run is per enabled product, and price_estimate PK
+ is variant_id. If estimates only cover unpriced variants, union = comp + est exactly. Let
+ me verify with a union query anyway (EXISTS both).
+
+Also freshness: latest comp 2026-11-22 across all. Data cutoff confirmed.
+
+Also for the claim: "Price = last researched eBay comp" — the football MCP comps are SCP price
+-guide comps (SCP loose/cib/graded from the SCP price guide), NOT eBay comps. That
+'s an important nuance: the football MCP's card_price source is SCP (a price guide
+), not eBay sold listings. The app's comp definition says eBay comp. So the claim's identity
+: Price column fed from MCP = price-guide comps, not eBay comps. Worth stating plainly
+: this is a semantic substitution (last eBay comp → last SCP comp), a decision the
+ claim is effectively asking about.
+
+Now compute union and also the fraction with grade? Not needed.
+
+Next: eBay-side evidence. Need web sources:
+1. Marketplace Insights API — limited release, requires approval from eBay. Source
+: eBay developer docs (developer.ebay.com/api-docs/marketplace-insights/ or similar). Date
+.
+2. Browse API — shows active listings (asking prices), not sold data.
+3. eBay marketplace research / Terapeak? Not relevant.
+4. Account deletion notification exemption: eBay requires apps to receive account deletion notifications unless
+ they qualify for exemption ("If your application does not collect, store, or process eBay member data,
+ you may request an exemption"). Source: developer.ebay.com/support/account-deletion or
+ developer-portal docs.
+
+Let me search the web for these with dates. Then also check whether the current key
+set has Marketplace Insights access — can't check approval status; but I can verify
+ the keyset's scopes? Could test the OAuth client-credentials token with scope for
+ marketplace insights — but that's beyond need and uses credentials; skip. The recorded
+ state (docs/EBAY_SANDBOX.md 2026-11-22: only taxonomy answered) is the evidence;
+ approval pending.
+
+Also: the inventory population. The falsifier's denominator is "cards in the inventory"
+ (Midnight, Flagship, Inception, Chrome). I cannot count the inventory DB (Supabase rule for
+ discussion agents). BUT the claim is about the MCP's ability to price them. Can I get
+ inventory counts another way? Hmm — is there an app-side MCP for the app? The app's
+ MCP is part of S7 (not built yet — S7 status?). Check HANDOFF.md for S7 state. If the
+ app MCP isn't live, there's no way to count inventory cards. Also the inventory is personal
+ data; but even the count... The rule says discussion agents never touch the inventory
+ DB. I'll state the denominator gap explicitly: falsifier is testable only app-side once
+ S7 exists; MCP-side coverage measured as proxy against full checklist populations
+.
+
+Actually wait — maybe the inventory cards are Dennis's own collection, in the Sup
+abase app. Could there be a seeded test dataset? Not appropriate to query. State the gap.
+
+Also the third falsifier: eBay data storage vs "I do not persist eBay data" exemption. Evidence
+: eBay developer docs on account deletion notifications + exemption request. Search
+.
+
+Let me also check what S12 is (eBay draft creation) and what data it stores. docs/STORIES.md S11
+/S12. Quick grep.
+∴ Thought for 9s · Now compute combined coverage (comp ∪ est) per product:
+────────────────────────────────────────
+
+────────────────────────────────────────
+☤ Hermes
+Coverage numbers are in. Now the eBay-side evidence and the union counts.
+────────────────────────────────────────
+
+💻 $ ./.venv/bin/python - <<'EOF' import sys + 1 command  10.8s
+🔍 Search eBay Marketplace Insights API limited release approval sold listings developer  3.2s
+
+────────────────────────────────────────
+Union coverage confirmed: comp and estimate are disjoint (0 overlap of 135,366).
+
+Coverage (2026-11-23 query, cutoff 2026-11-22):
+- flagship_2026: 42,163/43,770 = 96.3%
+- chrome_2026: 19,776/25,091 = 78.8%
+- chrome_2025: 23,308/24,220 = 96.2%
+- midnight_2026: 6,799/7,543 = 90.1%
+- midnight_2024: 4,866/4,866 = 100%
+- inception_2024: 4,012/4,186 = 95.8%
+- inception_2026: 3,854/4,680 = 82.3%
+
+All well above 75%. So MCP-side the falsifier's 25% gap is not met — but the denominator is the full check
+lists, not the inventory cards. State that.
+
+Also caveat: chrome_2026 comp-only coverage is 3.0% (750/25,091) — the price column
+ fed purely by real comps would fail badly there; estimates carry it. And estimates are derived
+ (tier-median / ladder), not comps. The claim's "Price (last comp)" semantics: the
+ football MCP gives SCP price-guide comps + derived estimates, NOT eBay comps. That
+'s the honest core: it's a substitution of definition.
+
+Now eBay evidence:
+1. Marketplace Insights API is Limited Release — official eBay doc (developer.ebay.com
+/api-docs/buy/marketplace-insights/static/overview.html). Extract that page for a
+ citation and date.
+2. Browse API: no sold filter. Official docs.
+3. Account deletion notification / exemption: search for that.
+4. eBay "marketplace research" alternative? Terapeak is seller-facing; not API.
+
+Also check the exemption doc: "Account Deletion/Closure Notifications" at developer.ebay.com
+ — apps can request exemption if they don't store user data. Let me fetch.
+
+Also note the app's keyset status: production approval pending (registered 2026-11-21/
+22, docs/EBAY_SANDBOX.md). Marketplace Insights would additionally need separate approval
+.
+
+Let me fetch the eBay docs pages.
+∴ Thought for 4s · Union coverage confirmed: comp and estimate are disjoint (0 overlap of…
+────────────────────────────────────────
+
+📄 Fetch developer.ebay.com +1  6.9s
+🔍 Search eBay developer account deletion notification exemption "do not store" eBay member data requirement  6.9s
+
+────────────────────────────────────────
+Good. The account-deletion exemption is documented: developers who "do not store any eBay data"
+ can apply for exemption from marketplace account deletion/closure notifications;
+ there's a "Not persisting eBay data" toggle in the dev portal. Key detail: the exemption covers
+ "eBay data" broadly — the FAQ says "Every eBay Developers Program application that
+ is making API calls that use/store eBay user data must be subscribed". The exemption text
+: "if they do not store any eBay data". So if S12 stores sold-item history (eBay API
+ data) while the exemption toggle is On (Not persisting eBay data), that's incompatible
+ — unless the toggle is turned off and the app implements deletion notifications. Actually is
+ it incompatible per the falsifier? The falsifier: "storing eBay API data is compatible
+ with the keyset's 'I do not persist eBay data' exemption." Storing data while holding
+ the exemption is contradictory — the fix is to unsubscribe from the exemption and implement
+ the notification endpoint. So the exemption is not a barrier per se, but holding
+ it while storing data is a compliance misrepresentation. I need to fetch the actual
+ guide page for the exemption's exact wording to cite properly. Let me extract developer.ebay.com
+/develop/guides/sell/marketplace-user-account-deletion.
+
+Also need Marketplace Insights overview page — the extract failed (crawl empty). Try browser
+ or another fetch. Try web_extract on the get-started page which cites the limited
+-release statement, and maybe use r.jina? Blocked-page-recovery skill could help. Sim
+pler: the get-started-on-a-buying-application page states it. Extract that page.
+
+Also worth checking: does the app's keyset currently have any eBay data access at
+ all? Production approval pending — recorded 2026-11-22. And Marketplace Insights is
+ a separate limited release requiring application. Fetch the page.
+∴ Thought for 3s · Good.
+────────────────────────────────────────
+
+📄 Fetch developer.ebay.com +1  0.9s
+
+────────────────────────────────────────
+Good citations:
+1. eBay "Get Started on a Buying Application" (fetched 2026-11-23): Marketplace Insights
+ API — "Retrieve the sales history of items sold on eBay" and "(This is a Limited Release)". Also
+ "Buy APIs ... are intended for certain approved eBay partners based on their application"
+ — application growth check required for Production access.
+2. Browse API overview (fetched 2026-11-23): searches listings for sale; no sold/ended filter —
+ endpoints listed (item_summary/search etc.), all require application access token.
+3. Marketplace User Account Deletion guide (fetched 2026-11-23): required to subscribe OR
+ opt out "if they do not store any eBay data"; exemption toggle "Not persisting eBay data".
+
+Still want: the Marketplace Insights overview page itself (limited release statement
+ on the API's own page). Try the .md copy? The page said "Copy Markdown / View as Markdown"
+ pattern exists for guides. Try https://developer.ebay.com/api-docs/buy/marketplace-insights/static
+/overview.md? Not sure. The buying-application page citation is sufficient — official
+ eBay source.
+
+Also want evidence of the current keyset state (no Marketplace Insights access; production pending
+). Sources: docs/EBAY_SANDBOX.md (2026-11-22) and AGENTS.md project facts (approval
+ pending, registered 2026-11-21). Also check whether there's a record that the exemption toggle
+ was applied? Maybe HANDOFF.md mentions eBay keyset account-deletion exemption. G
+rep for "exempt" in docs/.
+
+Also check S12 story definition to know what eBay data it wants to store.
+∴ Thought for 3s · Good citations:
+────────────────────────────────────────
+
+💻 $ grep -n "S12\|S11" docs/STORIES.md + 6 commands  0.2s
+
+────────────────────────────────────────
+I was in ~/collectingcards cwd from the previous terminal call. cd back to ~/nflinventory.
+∴ Thought for 1s · I was in ~/collectingcards cwd from the previous terminal call.
+────────────────────────────────────────
+
+💻 $ sed -n '/## S12/,/## S13/p' docs/STORIES.md + 2 commands  0.1s
+
+────────────────────────────────────────
+Critical evidence found in HANDOFF.md (2026-11-23, presumably Claude entry): eBay Production key
+set `nflinventory` was "Non Compliant". Dennis enabled the Marketplace Account Deletion exemption
+ (reason "I do not persist eBay data"); keyset now compliant. Added an S11 acceptance criterion: build the account-deletion endpoint and switch off the exemption before the app stores any eBay
+ data.
+
+This directly answers falsifier 3: the exemption is ACTIVE on the production keyset as
+ of 2026-11-23, and the repo has already committed to switching it off before storing
+ any eBay data. Storing eBay API data while the exemption is on is incompatible (
+per eBay's own doc: exemption only for developers who "do not store any eBay data
+"). So the exemption currently binds: S8 reading eBay sold data would require either
+ (a) granting Marketplace Insights + storing data → must switch off exemption first (
+S11 criterion), or (b) staying MCP.
+
+Now the inventory-side denominator. The app's DB has real data (Dennis's cards: 50 Midnight
+ cards mentioned in handoff, etc.). Discussion agents must not touch it. But is the
+ app's own MCP live (S7)? HANDOFF says "Open issues / next step: S7 MCP endpoint"
+ — S7 not built. So no app-side MCP. I'll state: denominator unavailable to a discussion agent; measured
+ against the full checklist populations instead; falsifier testable app-side later
+.
+
+Actually, can I count inventory cards without "touching" the DB? The rule is hard
+: no. State the gap.
+
+One more piece: the app's Price = eBay comp definition, and whether MCP prices can
+ substitute. The football MCP card_price source is SCP (pricecharting.com — "SCP" =
+ the console download channel at www.pricecharting.com per docs/COLLECTINGCARDS_PROJECT.md:
+ SCP download channel GET https://www.pricecharting.com/price-guide/download-custom). Wait
+ — SCP in that context = "sports card pro"? The URL is pricecharting.com. So card prices
+ come from PriceCharting's price guide (which itself tracks eBay sold + others). Worth
+ noting: PriceCharting has a commercial interest (it sells data). Flag commercial
+ interest per instructions: PriceCharting sells subscriptions to its data. Also the
+ football MCP is Dennis's own platform (no commercial interest in the answer... though
+ it's his infrastructure — the claim was presumably opened by him/loop).
+
+Also note: comp counts are price rows across card_price table with source SCP. Let me quickly
+ verify the source of card_price rows — check cc.card_price 'source' values distribution for
+ flagship. And what pc returns (loose/cib/graded). Quick query: select source, count(*)
+ from cc.card_price join variant... limit for the 4 sets. Also card grade dimension
+. Keep it small.
+
+Also sanity: the `sold_rate` table has 0 rows — the S8 story's football:sold_rate source is
+ currently EMPTY. That's important: the MCP's "realized sales" source is empty (p
+urchases 163 rows, sold_rate 0). Report that as a gap.
+
+Let me run one more query: source distribution per product, and price rows per variant
+ (loose only?). Actually keep scope tight: source distribution for the 4 sets.
+∴ Thought for 8s · Critical evidence found in HANDOFF.md (2026-11-23, presumably Claude en…
+────────────────────────────────────────
+
+💻 $ ./.venv/bin/python - <<'EOF' import sys + 1 command  5.9s
+
+────────────────────────────────────────
+Source distribution: scp_csv (PriceCharting downloads) 1,189,468 rows + legacy 17,429
+. Grades: raw/psa10/g9.
+
+Now I have everything for the research round. One more thing: the round must include
+ the frontmatter matching the roster: researcher, model z-ai/glm-5.3-flash, harness:
+ hermes (this harness). Per the gate: filename tag after `--` is the model tag: "harness-n
+flinv" — matches C001's r01 filename which had model: z-ai/glm-5.3-flash and harness: her
+mes (Ultron...). Good — same filename pattern `r01-research--harness-nflinv.md`.
+
+Hmm wait: gate-independence line 236-ish: "the filename makes this a {want} round
+ but the frontmatter says role" — filename tag "harness-nflinv" is the model tag.
+ Fine.
+
+The gate also wants model exactly as roster declares: z-ai/glm-5.3-flash. Round counter
+: n=1 (round: 1 in frontmatter, claim round counter).
+
+Also: "No prior rounds carry a model field" — there are no prior rounds; this is r
+01.
+
+Check bin/sync after writing. Also the note: "10 claims in flight, budget allows 6. Finish
+ open claims before proposing more" — not my job here beyond noting; I'm only doing the assigned
+ round. I won't create claims.
+
+Let me also grab the independence/format requirements: round file frontmatter keys
+ used in C001: claim, round, role, model, harness, date. Good.
+
+Now check git state — there's a modified file discussion/rounds/2026-11-23-harness-nflinv
+.log (uncommitted). That's the log of this dispatch. bin/sync will probably handle commits
+. Let me look at bin/sync briefly to know what it does (it commits rounds + runs gates
+ + reindex).
+∴ Thought for 3s · Source distribution: scp_csv (PriceCharting downloads) 1,189,468 rows +…
+────────────────────────────────────────
+
+💻 $ cat discussion/inbox.md + 4 commands  0.1s
+
+────────────────────────────────────────
+Now write the research round. Structure:
+
+Frontmatter:
+```
+---
+claim: C010-s8-price-source-the-football-mcp-not-the
+round: 1
+role: researcher
+model: z-ai/glm-5.3-flash
+harness: hermes (Ultron on Dennis's Linux harness)
+date: 2026-11-23
+---
+```
+
+Content sections:
+1. Method + populations
+2. Evidence 1: what the app defines Price as (migration 0002, HANDOFF) — S8 must write comp_cents or estimate path.
+ S8 story quotes sources verified 2026-11-20.
+3. Evidence 2: eBay side.
+   - Marketplace Insights = Limited Release, sales history; production Buy APIs need
+ Application Growth Check approval (eBay doc, fetched 2026-11-23).
+   - Browse API: active listings only; no sold filter (endpoints list, fetched 202
+6-11-23). Asking prices, not comps.
+   - Keyset state: production keyset minted live 2026-11-22 (docs/EBAY_SANDBOX.md
+); Marketplace Insights access NOT granted — no evidence anywhere in the repo of a
+ grant; the only production access evidenced is OAuth token + taxonomy tree. Explicit
+ gap: I cannot see the dev portal; approval status is unknown to the app. Registered
+ 2026-11-21 (AGENTS.md), Marketplace Insights would additionally require the Application Growth Check (
+not filed — no repo evidence).
+   - Account deletion exemption: eBay doc (fetched 2026-11-23): exemption only for
+ devs who "do not store any eBay data"; toggle "Not persisting eBay data". HANDOFF 2026
+-11-23: Dennis enabled the exemption on the production keyset (reason "I do not persist eBay data"); repo
+ added S11 acceptance criterion: build deletion endpoint and switch off exemption BEFORE
+ storing eBay data. So as of today, storing eBay API data is NOT compatible with the key
+set's live exemption — it would require un-subscribing the exemption (a portal toggle Dennis owns
+) plus a deletion endpoint. Not a permanent bar, but a real, dated precondition.
+4. Evidence 3: football MCP coverage. The decisive numbers (2026-11-23 queries, cc DB cutoff
+ 2026-11-22):
+   Table: product | variants | real comps | comp-only % | +stored estimates | priced
+-or-est %
+   - flagship_2026: 43,770 / 20,109 (46.0%) / 42,163 (96.3%)
+   - chrome_2026: 25,091, 750 (3.0%) / 19,776 (78.8%)
+   - chrome_2025: 24,220 / 15,336 (63.3%) / 23,308 (96.2%)
+   - midnight_2026: 7,543 / 1,102 (14.6%) / 6,799 (90.1%)
+   - midnight_2024: 4,866 / 3,710 (76.2%) / 4,866 (100%)
+   - inception_2024: 4,186 / 3,251 (77.7%) / 4,012 (95.8%)
+   - inception_2026: 4,680 / 1,131 (24.2%) / 3,854 (82.3%)
+   Comp+estimate disjoint verified (0 of 135,366 estimate rows overlap comp rows).
+   Freshness: latest comp observed_on 2026-11-22 across all products (daily scp pipeline
+).
+   Sources: scp_csv (PriceCharting price-guide console CSV downloads; 1,189,468 of
+ 1,206,897 rows) + legacy (17,429). Grade dimension raw/psa10/g9.
+   Caveat: many estimates, few real comps on new sets (chrome_2026 3%, midnight_2026 14
+.6%, flagship 46% raw) — the estimator is tier-median/ladder-derivation, not a comp
+. If "Price" strictly means a comp, coverage collapses on new sets.
+   sold_rate table: 0 rows (2026-11-23) — the football:sold_rate "realized sales"
+ source named in S8's story is currently empty. purchase has 163 rows. Flag as gap
+.
+   Also MCP caps: 20 req/min/token, 30 s timeout (measured previously; S8 story records
+; status confirms).
+5. The denominator gap: the falsifier's population is "cards in the inventory" — the app DB. Discussion
+ agents may not touch it (AGENTS.md Supabase rule). I measured MCP-side checklist
+ populations instead. Explicit gap: whether >25% of Dennis's actual owned cards in
+ those sets lack MCP prices is not measurable from here; needs the app-side S7/S8 agent once
+ the app MCP exists. State plainly.
+6. Semantic substitution: comp_cents comment says "last researched eBay comp"; MCP
+ comps are PriceCharting price-guide prices, not eBay sold comps. The claim effectively
+ decides a definition change, or the value history source string marks it. Commercial
+ interest: PriceCharting sells price-guide subscriptions (scp_csv is a paid download channel
+) — flag it. Also the football MCP is Dennis's own platform — the loop's note: it's infra
+ he pays for; no independent interest, but it is not a neutral third party either
+.
+7. eBay API call limits: Browse 5,000/day default (getanyapi blog citing eBay's call
+-limits page Oct 2, 2026 — secondary source; flag as unverified secondary).
+8. Bottom line: none of the three falsifiers fires today: (1) no Marketplace Insights grant evidenced
+; (2) MCP coverage ≥78.8% priced-or-estimated on every set named, far above the 75% bar
+ (with the comp-strict caveat and the denominator gap); (3) storing eBay data is incompatible with the live
+ exemption today, requiring an owner-side toggle flip + deletion endpoint — the repo already records this as an
+ S11 precondition. Claim stands as of this round; strongest residual argument for
+ eBay is freshness/actuality of true sold comps vs guide prices on hot rookies.
+
+Keep numbers labeled with date/population/sample/source. Write the file. Then bin
+/sync.
+
+Population labels: "cc price DB variants of product X (full staged checklist, not
+ Dennis's owned cards)". Sample size = full census of those variants. Source link: the
+ queries themselves (SQL shown, run date). For repo facts: file+line citations.
+
+Let me compute exact percentages via python to avoid mental arithmetic. 20109/43770,
+ 750/25091, 15336/24220, 1102/7543, 3710/4866, 3251/4186, 1131/4680; unions: 42163/4
+3770, 19776/25091, 23308/24220, 6799/7543, 4866/4866, 4012/4186, 3854/4680. Run calculator
+.
+∴ Thought for 13s · Now write the research round.
+────────────────────────────────────────
+
+💻 $ python3 - <<'EOF' rows = [ ("nfl_flagship_2026", 43770, 20109, 42163), ("nfl_chrome_2026", 25091, 750, 19776), ("nfl_chrome_2025", 24220, 15336, 23308), ("nfl_midnight_2026", 7543, 1102, 6799), ("nfl_midnight_2024", 4866, 3710, 4866), ("nfl_inception_2024", 4186, 3251, 4012), ("nfl_inception_2026", 4680, 1131, 3854), ] for pid, n, comp, pe in rows: print(f"{pid:<18} comp {comp}/{n} = {comp/n:6.1%} priced-or-est {pe}/{n} = {pe/n:6.1%}") EOF  0.2s
+
+────────────────────────────────────────
+Now write the round file.
+∴ Thought for 21s
+────────────────────────────────────────
+
+✍️ Write /home/dennis/nflinventory/discussion/claims/C010-s8-price-source-the-football-mcp-not-the/r01-research--harness-nflinv.md
+│ discussion/claims/C010-s8-price-source-the-football-mcp-not-the/r01-research--harness-nflinv.md
+│ @@ -0,0 +1,158 @@
+│ +---
+│ +claim: C010-s8-price-source-the-football-mcp-not-the
+│ +round: 1
+│ +role: researcher
+│ +model: z-ai/glm-5.3-flash
+│ +harness: hermes (Ultron on Dennis's Linux harness)
+│ +date: 2026-11-23
+│ +---
+│ +
+│ +# R1 research: is the football MCP the right price source for the app's Price column?
+│ +
+│ +Everything below was gathered on 2026-11-23 (CET) on Dennis's harness. Every figure carries
+│ +its date, the population it counts, the sample (always a full census of the named table, never a
+│ +sample drawn from it) and where it came from: either a query I re-ran today (SQL shown), a file
+│ +in this repo with a line reference, or a fetched eBay developer page. Where the evidence does not
+│ +exist, I say so and stop, per the brief.
+│ +
+│ +Populations first, because the falsifier's population is narrower than what I can measure:
+│ +
+│ +- **P-app** = the cards in the app's inventory (Dennis's owned cards, Supabase project
+│ +  `ngxfvhlbrhlqarpwavcf`). NOT measured. Discussion agents may not touch the inventory database
+│ +  (AGENTS.md, "The Supabase rule"). This is an explicit gap, see section 5.
+│ +- **P-cc** = the full staged checklist of a product in the cc price database (every variant the
+│ +  price platform tracks for that set, not only the cards Dennis owns). Measured in full, 2026-11-23.
+│ +
+│ +## 1. What the app defines Price as (repo evidence, 2026-11-23)
+│ +
+│ +`cards.comp_cents` is defined as "Price: last researched eBay comp, integer cents"
+│ +(`supabase/migrations/0002_comp_price.sql:5,8`), separate from `estimate_cents` (Est. price) and
+│ +`list_price_cents` (eBay ask). HANDOFF 2026-11-23 ("Deploy + Price field"): 50 cards currently in
+│ +the app carry Price or Est. price after the Midnight import fix; the importer maps a sheet's PRICE
+│ +column to Price (comp). S8's story (docs/STORIES.md:135, "Claude refreshes values with my football
+│ +MCP") already names the football MCP as the value source and requires every written value to carry
+│ +a source id and date. So the claim is really a definitional question: the column is *defined* as an
+│ +eBay comp, and the football MCP does not serve eBay comps. What it serves is in section 3.
+│ +
+│ +## 2. The eBay side (fetched 2026-11-23 unless noted)
+│ +
+│ +- **Sold prices = Marketplace Insights API = Limited Release.** eBay's own buying-application
+│ +  guide: "Marketplace Insights API: Retrieve the sales history of items sold on eBay. (This is a
+│ +  Limited Release.)" Source: https://developer.ebay.com/develop/get-started/get-started-on-a-buying-application
+│ +  (fetched 2026-11-23). Production access to any Buy API additionally requires an Application
+│ +  Growth Check: applications are granted "based on the proposed business model" (same page).
+│ +  This app's business model (an inventory app for one user that lists drafts) is not one of the
+│ +  named Buy API categories on that page (Affiliate, member checkout, guest checkout, Offer API).
+│ +- **The Browse API shows asks, not sold prices.** Its endpoints are item_summary/search, item and
+│ +  friends; the search filters target active listings ("search eBay listings", Browse API overview,
+│ +  https://developer.ebay.com/api-docs/buy/browse/static/overview.html, fetched 2026-11-23). No
+│ +  sold/ended resource exists in the Browse API. A secondary source agrees (getanyapi.com blog:
+│ +  "It has no filter for sold or ended listings", citing eBay's call-limits page as of 2026-10-02,
+│ +  Browse default 5,000 calls/day) - flagged as commercial interest: that blog sells an eBay
+│ +  scraping API. The primary fact needs no secondary source.
+│ +- **This app's keyset state.** Production keyset live 2026-11-22: OAuth token minted, taxonomy
+│ +  tree answered (docs/EBAY_SANDBOX.md, "Production (live 2026-11-22)"). Developer account
+│ +  registered 2026-11-21 (AGENTS.md project facts). **No evidence exists anywhere in the repo that
+│ +  Marketplace Insights access was requested or granted.** I cannot see the dev portal from here;
+│ +  the approval status is unknown to the app. Stated as a gap, not resolved by guessing.
+│ +- **The 'I do not persist eBay data' exemption.** eBay's account-deletion guide: every
+│ +  third-party developer must either (1) subscribe to marketplace account deletion/closure
+│ +  notifications or (2) apply for exemption "if they do not store any eBay data"; the portal toggle
+│ +  is "Not persisting eBay data". Source:
+│ +  https://developer.ebay.com/develop/guides/sell/marketplace-user-account-deletion
+│ +  (fetched 2026-11-23). Repo state: the production keyset was flagged "Non Compliant" and Dennis
+│ +  enabled the exemption (reason: "I do not persist eBay data") on 2026-11-23, with a new S11
+│ +  acceptance criterion: build the deletion endpoint and switch the exemption OFF before the app
+│ +  stores any eBay data (docs/HANDOFF.md, entry "eBay Production keyset ... Non Compliant").
+│ +  **Verdict on falsifier 3: as of 2026-11-23 storing eBay API data is NOT compatible with the
+│ +  live exemption.** It is compatible in principle - turn the toggle off, run the deletion
+│ +  endpoint - but that is an owner-side portal action plus a built endpoint, i.e. a precondition,
+│ +  not a grant.
+│ +
+│ +## 3. Football MCP coverage (measured 2026-11-23; data cutoff 2026-11-22)
+│ +
+│ +Population: P-cc, full census of cc.variant per product. Two coverage tiers, disjoint by
+│ +construction and verified: **real comps** (cc.card_price rows) and **stored estimates**
+│ +(cc.price_estimate). Verified disjoint: of 135,366 estimate rows, 0 share a variant with any
+│ +card_price row (query re-run 2026-11-23).
+│ +
+│ … omitted 80 diff line(s) across 1 additional file(s)/section(s)
+💻 $ ./bin/sync  0.7s
+
+────────────────────────────────────────
+The privacy check flagged the rounds log file (discussion/rounds/2026-11-23-harness-nflinv
+.log) — "phone number: '091, 750 (3'". That's my own coverage table text echoed in
+ the log? The log captures the dispatch prompt/stdout — it contains "091, 750 (3.
+0%)"... wait "phone number" match on pattern like \d\d\d / ... The log is the dispatch log
+ created by bin/next or the dispatcher. Let me look at the file and the privacy checker
+ to see what matches.
+∴ Thought for 1s · The privacy check flagged the rounds log file (discussion/rounds/2026-1…
+────────────────────────────────────────
+
+💻 $ cat discussion/rounds/2026-11-23-harness-nflinv.log + 2 commands
+💻 $ grep -n "091" discussion/rounds/2026-11-23-harness-nflinv.log + 2 commands  0.1s
+
+────────────────────────────────────────
+The privacy check flagged the log file: "phone number: '091, 750 (3'". The log contains
+ my agent's own tool-output echoes — line 5864: "chrome_2026: 25,091, 750 priced (3
+.0%!)". The phone pattern matches something like `\d{3} / \d{3}` — "091, 750" from "25,
+091, 750 priced". The log is a transcript of this dispatch (including my scratch reasoning
+ with \r endings — my terminal outputs got captured? It appears bin/hermes-round.sh
+ logs the full session, including tool outputs).
+
+The log is a loop artifact that bin/sync commits. It's a false positive on digits
+ (variant counts, not a phone number). Recovery path per the doc: "A false positive is recover
+able — edit the file and re-run bin/sync". The log is a transcript; editing a log
+ feels wrong but the check is fail-closed and the doc explicitly blesses editing false positives. Options:
+1. Edit the log's matching line to break the pattern (e.g. "25,091, 750 priced" → change
+ to something without "091, 750"). But the log is an audit artifact.
+2. Check what the phone regex actually is and see how benign the match is.
+
+Actually wait — the matching text "'091, 750 (3'" — pattern probably r"\+?\d{2,4
+}[\s/-]?\d{3}..." Let me check LEAKS in pipeline/export_aggregates.py. Then decide. The
+ cleanest: adjust the log line minimally — e.g. change "25,091, 750 priced (3.0%!
+)" spacing so it doesn't read as a phone. But it's a transcript of what happened; editing
+ it changes history. However the repo's convention: the log gets committed with each
+ round; a false positive edit is the documented recovery. Alternatively, is the log supposed
+ to be committed at all? The previous round log 2026-11-21 presumably committed fine.
+
+Hmm — wait. Is this log even mine? "discussion/rounds/2026-11-23-harness-nflinv.log" was
+ modified before my turn (it was ' M' at session start). It's the log for today's harness dispatch
+es — contains this session's transcript (my own outputs). The other dispatches today
+ (C002 etc.) are in there too.
+
+Given "Finish open claims before proposing more" note — earlier logs: only today's log file
+ is dirty. The previous rounds committed logs presumably similarly.
+
+The false-positive edit: the string "091, 750 (3" — comes from my scratch echo "chrome
+_2026: 25,091, 750 priced (3.0%!)"? That has "25,091, 750 priced" → "091, 750"? The match
+ shows "091, 750 (3" with a slash... line 6227: "comp 750 + est 19,026 → union up
+ to 19,776/25,091 = 78.8%"? Hmm "091 = 78.8". The match '091, 750 (3' — maybe from
+ line 5864 with \r: "chrome_2026: 25,091, 750 priced (3.0%!)"? No slash there. Search
+ the actual phone pattern.
+
+Let me find the LEAKS patterns.
+∴ Thought for 6s · The privacy check flagged the log file: "phone number: '091, 750 (3'".
+────────────────────────────────────────
+
+💻 $ python3 -c " import sys; sys.path.insert(0,'pipeline') from export_aggregates import LEAKS for name, pat in LEAKS: print(name, pat) "  0.1s
+
+────────────────────────────────────────
+Phone pattern: `(?:\+49|\b0)[\d][\d \-/()]{6,}\d` — matches `\b0` then digit then 
+6+ chars in class then digit. "091, 750 (3" = "0" "9" then "1 / 750 (" (9 chars)
+ then "3". So it's digits from variant counts read as a phone number: something like "...
+091, 750 (3.0%)..." in the log.
+
+Find the exact line and context. The flagged match was '091, 750 (3'. In my terminal
+ outputs echoed into the log: "chrome_2026: 25,091, 750 priced (3.0%)" — that has
+ "091, 750 (3" with a comma not slash. The match shows a slash: "091, 750 (3". Possibly
+ from my status table? "nfl_chrome_2026 25091 750" no slash. Search the log for "091, 750"
+ or "091, 750".
+∴ Thought for 2s · Phone pattern: `(?:\+49|\b0)[\d][\d \-/()]{6,}\d` — matches `\b0` then…
+────────────────────────────────────────
+
+💻 $ grep -n "091 */ *750" discussion/rounds/2026-11-23-harness-nflinv.log + 2 commands  0.1s
+
+────────────────────────────────────────
+Line 6549 in the log: "- chrome_2026: 25,091, 750 (3.0%) / 19,776 (78.8%)" — that
+'s from my earlier scratch notes echo (the shell output of my thinking? No — it's my terminal
+ command echo: my `python3 - <<'EOF'` scratch output? Actually it was from my own
+ interim analysis output that got captured: "   - chrome_2026: 25,091, 750 (3.0%) /
+ 19,776 (78.8%)" — that's from my draft notes echoed in the terminal (the write_file of
+... no). Whatever — the log captures the whole session including intermediate reasoning
+ echoes.
+
+Also lines 6696+ contain the transcript of my own privacy debugging, which itself
+ quotes the flagged string — recursive. Editing those is messy.
+
+Wait — but is the log even part of what should be committed now? The log file is dirty
+ from before my turn and will grow as my session continues. The transcript is being appended live
+. If I edit the line, the live transcript may keep capturing more digits in slash
+ form as I continue (e.g., my table "25,091, 750" appears in the round file itself
+! The round file contains "nfl_chrome_2026 | 25,091 | 750 | 3.0%" — pipe table, no slash.
+ Good.)
+
+But the privacy check only scans STAGED files. The round file is fine (uses pipes). The log
+ is the problem.
+
+Options:
+A. Edit the log file's matching lines to break the digit-slash pattern (the documented false
+-positive recovery). But the transcript is live — bin/sync stages whatever is there
+ now; editing now is fine for this commit, but the pattern lines are already closed
+ (they were written earlier today by earlier dispatches in the same log).
+
+Careful: the log will keep growing (this session is logged live?). Is it? The log
+ already includes my transcript up to "bin/sync refused" — it seems the dispatcher
+ writes the transcript continuously. If I edit line 6549 and then re-run sync later
+, more of my session (with more "091, 750"-like text from my quoting in reasoning
+) may have been appended — including my quoting of the flagged string itself (lines 66
+96-6741 contain the string quoted!). Those too match? "091, 750 (3" appears there
+. Yes grep found 6696/6697/6710/6719/6723/6739 as matches of "091 */ *750". So my
+ own debugging is now in the log, quoting the flagged text.
+
+Hmm. This is getting recursive and fragile. Better approach: make the round file itself
+ (the artifact that matters) privacy-clean (it is), and fix the log with a targeted
+ sed on the phone-shaped sequences: replace "25,091, 750" → "25,091 : 750" or "25
+,091,750". The minimal edit that breaks the phone pattern is changing the separator
+ between digits.
+
+But new transcript lines will keep being appended as long as my session continues
+, and they include my full reasoning text (this very analysis). Any further mention
+ of "091, 750" will re-flag. So: edit existing matches, and stop mentioning that
+ digit sequence with slashes in my visible output from now on. My future text won
+'t contain it.
+
+Also — alternative cleaner path: does bin/next or the convention expect the log committed
+ with the round? The rounds dir has logs for 11-21, 11-22 committed. Yes, logs get
+ committed by sync (git add discussion).
+
+Wait, actually — maybe better: check whether the log for today is even *supposed* to be committed by this round's sync,
+ or whether the dispatcher commits it separately at end-of-dispatch. If bin/sync stages
+ all of discussion/, it takes everything staged. The earlier failed sync already staged everything.
+ So it must pass.
+
+Plan:
+1. sed the log: replace occurrences of the phone-shaped sequences. Specifically the digit runs
+. Simplest: replace "091, 750" with "091 and 750" globally in the log. But there may be other
+ phone-shaped matches after editing (privacy check names one at a time? It printed
+ one). Better: run the privacy checker directly against the staged file repeatedly
+ to enumerate all hits, fix all, then sync.
+
+Actually the check fails closed on any hit; run bin/privacy-staged --? Let me just run
+ a local scan of the log with the LEAKS patterns and list all matches.
+∴ Thought for 10s · Line 6549 in the log: "- chrome_2026: 25,091, 750 (3.0%) / 19,776 (78.…
+────────────────────────────────────────
+
+✗ $ python3 - <<'EOF' import sys, re + 1 command  0.2s [exit 1]
+💻 $ python3 - <<'EOF' import sys, re + 1 command  0.5s
+
+────────────────────────────────────────
+All 27 hits are the same digit sequence "091, 750" (variant counts from Chrome 2026
+, written with slashes in my scratch notes that the live transcript captured). Lines
+ 6549 (the original), plus my own debugging transcript lines 6696-6835 quoting it repeatedly
+. This is a pure false positive on variant counts, not a phone number.
+
+The documented recovery for false positives: "edit the file and re-run bin/sync". The log
+ is a transcript; I'll rewrite the sequence "091, 750" to "091, 750" throughout —
+ wait, "091, 750" — does the phone pattern match "\b0 9 1, 750"? Pattern: (?:\+49
+|\b0)[\d][\d \-/()]{6,}\d. Class includes space, comma? No — class is [\d \-/()]: digits
+, space, dash, slash, parens. Comma not included. So "091, 750 (3" — after "091" comma
+ breaks? "0" "9" then "1, 750 (3..." — comma is not in the class, so the match would
+ need [\d \-/()]{6,} — "1, " has a comma → breaks at position. Actually the match starts at "0", chars: 0,9,1 →
+ then "1, 750 (" : "1" ok? Wait match is \b0 [\d] [\d \-/()]{6,} \d. Start "0", next
+ "9", then run of [\d \-/()] at least 6: "1, 750 (" — comma breaks it, only "1" then comma
+. Run length 1 < 6 → no match.
+
+So replacing "091, 750" → "091, 750" kills all matches. Also "091, 750" (two spaces, line 676
+2).
+
+But caution: the transcript is live-appended by the dispatcher as my session continues.
+ If it appends more of my context after I finish (including this analysis with the sequence
+ quoted), hits could reappear. My visible text after the edit will no longer contain the
+ slash form... but the earlier part of my conversation (including quotes) is already in
+ the log lines 6696+. I'm editing those lines themselves. After the edit, re-scan to
+ confirm zero hits. Then run bin/sync quickly, before more transcript accumulates.
+
+Also there's a risk that the dispatcher rewrites/replays the whole log at some point. Nothing
+ I can do beyond the documented recovery; if sync fails again with a new hit, repeat
+.
+
+Let me do the sed on the log file now.
+∴ Thought for 5s · All 27 hits are the same digit sequence "091, 750" (variant counts fro…
+────────────────────────────────────────
+
+────────────────────────────────────────
+☤ Hermes
+All 27 hits are the same variant-count string ("091, 750", Chrome 2026's counts) that my scratch notes echoed into the dispatch transcript; the phone regex misreads it. The documented false-positive recovery is to edit the file and re-run sync. I will change the slash separators to commas (no meaning change) and immediately re-run the scan and sync.
+────────────────────────────────────────

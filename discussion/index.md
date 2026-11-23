@@ -16,7 +16,7 @@ does not exist in public sources - that is a result, not a to-do.
 | [C007 Deployment URL not recorded; DoD item 6 cannot run](claims/C007-deployment-url-not-recorded-dod-item-6-c/claim.md) | open | - | unknown | 1 |
 | [C008 S12 variant-to-eBay mapping: ePID lookup with checklist-keyword fallback](claims/C008-s12-variant-to-ebay-mapping-epid-lookup-/claim.md) | open | - | unknown | 1 |
 | [C009 S7 auth: Supabase OAuth 2.1 server lets claude.ai add the inventory MCP as a custom connector, with tool calls running under RLS as the user](claims/C009-s7-auth-supabase-oauth-2-1-server-lets-c/claim.md) | open | - | unknown | 1 |
-| [C010 S8 price source: the football MCP, not the eBay API, is the right source for each card's Price (last comp)](claims/C010-s8-price-source-the-football-mcp-not-the/claim.md) | open | - | unknown | 0 |
+| [C010 S8 price source: the football MCP, not the eBay API, is the right source for each card's Price (last comp)](claims/C010-s8-price-source-the-football-mcp-not-the/claim.md) | open | - | unknown | 1 |
 
 ## Where the argument stands
 
