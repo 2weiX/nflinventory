@@ -7056,3 +7056,85 @@ Done. Round 2 (challenge) filed and synced.
 **Concessions:** C1–C5 concede the module-scope throw, the prerender timing, and that runs A and D do fail — I did not dispute any captured output.
 
 Each objection names what evidence would settle it. Net: claim should not stand as titled; at most a trivial docs touch-up once `decides:` names a real story.
+[23:00] round 6/8  role=challenger  via bin/numes-round.sh
+NOTE  10 claims in flight, budget allows 6. Finish open claims before proposing more.
+
+TASK  C006-inventory-loads-and-filters-client-side-   role=challenger  round=2
+[0m
+> build · moonshotai/kimi-k3.1-pro:free
+[0m
+[0m→ [0mRead AGENTS.md
+[0m→ [0mRead discussion/claims/C006-inventory-loads-and-filters-client-side-
+[0m→ [0mRead discussion/roster
+[0m→ [0mRead discussion/claims/C006-inventory-loads-and-filters-client-side-/claim.md
+[0m→ [0mRead discussion/claims/C006-inventory-loads-and-filters-client-side-/r01-research--harness-nflinv.md
+[0m→ [0mRead app/page.tsx
+[0m→ [0mRead app/import/page.tsx
+[0m→ [0mRead bin/sync
+[0m→ [0mRead bin/gate-independence
+[0m✱ [0mGlob "discussion/claims/C006-*/*"[90m 2 matches[0m
+[0m→ [0mRead discussion/index.md
+[0m
+[0m$ [0mgit log --oneline -5
+4fccb99 discussion: housekeeping
+933d74b discussion: round on C005-cold-start-build-fails-opaque-without-en
+c1333b7 discussion: housekeeping
+fc95d89 discussion: round on C004-duplicate-grouping-merges-differing-card
+97994d2 discussion: housekeeping
+[0m
+Now I have the full picture. Let me check my model status for independence:
+
+- **My model**: `moonshotai/kimi-k3.1-pro:free` (canonical folds to `kimi-k3-1-pro`)
+- **r01 researcher**: `z-ai/glm-5.3-flash` (canonical `glm-53flash`)
+- No boundary rounds yet (cycle starts at round 1)
+
+The gate checks: my model must not match any prior model in this cycle. `kimi-k3-1-pro` ≠ `glm-53flash` — no clash. I can write this challenge.
+
+Let me also check the app's `docs/STORIES.md` briefly for context on intended scale:
+[0m$ [0mgrep -n -i "row\|scale\|volume\|size\|cards" docs/STORIES.md | head -40
+20:  `breaks.csv` one row per break with seller/product/mechanic/prices, `spots/<break_id>.csv` per spot,
+33:| S2 | Browse and find cards | P0 | ✅ v1 |
+43:| S11 | Create an eBay draft in one click | P0 | 🔨 production keys live (2026-11-22, verified); user-token flow needs a registered redirect URL; sold-comps API is a separate growth check |
+44:| S12 | Match cards to the eBay catalog | P1 | 🔨 production taxonomy + Browse live now; Catalog product search and the sold-comps API are gated |
+46:| S14 | Link cards to the break they came from | P3 | 💤 |
+47:| S15 | Scan photos to add cards | P3 | 💤 |
+52:*As Dennis, I sign in once and only I can see my cards, so a public URL and a public repo are safe.*
+55:- [x] Every table has row-level security: user B reading or writing user A's rows gets 0 rows / an error. (Verified with a two-user SQL test in a rolled-back transaction.)
+56:- [x] Only the publishable Supabase key is used in the browser. No secret or service-role key exists in the repo or in `NEXT_PUBLIC_*` variables.
+59:## S2 · Browse and find cards ✅
+65:- [x] Identical copies collapse into one row with ×N (toggle).
+67:- [x] Select rows → change the status of all of them in one action.
+84:- [x] Preview shows the first 25 cards, the number ready and the number skipped (rows without a card number).
+88:- [ ] 🔜 Imports over 1,000 rows still work (chunked inserts exist; add a test).
+104:*As Dennis, I ask Claude, on any device, "what Mendoza cards do I have in stock?" or "mark the Hurts /99 as sold for $40 on Whatnot", and it happens in my app.*
+109:- Auth: OAuth 2.1 as the MCP spec requires, so it can be added in Claude under Customize → Connectors → custom. Use Supabase Auth as the identity provider. Every tool call runs **as the signed-in user**, so row-level security still applies. Never use the service-role key for tool calls.
+114:| `search_cards` | Same filters as S2 (query, status, set, has_epid, grading). Returns compact rows with an id. |
+124:- [ ] Added as a custom connector in claude.ai: sign-in completes in the browser and all 7 tools are listed.
+126:      "how many cards are in stock and what are they worth?",
+127:      "find my Caleb Williams cards",
+130:- [ ] A second test account's token cannot read or change the first account's cards through any tool.
+136:*As Dennis, I tell Claude "update the values of my in-stock Flagship cards" and it prices them with my football MCP and writes the new values into the app.*
+139:- [ ] `update_card` (or a new `set_values` tool for many cards) accepts a value **with its source** and a date. The value goes to `estimate_cents` and into the history from S9.
+140:- [ ] A test in claude.ai with both connectors updates at least 10 cards. Each changed card shows its new value, source and date.
+141:- [ ] Cards the football MCP can't price are left unchanged and listed back to Dennis. No zero or blank values get written.
+154:  of 100+ cards must pace itself (~5 minutes for 100 `pc` calls) — Claude batches and paces; the app never
+163:- [ ] New table `card_values` (card_id, value_cents, source, observed_at, user_id) with row-level security, plus a numbered migration in `supabase/migrations/`.
+164:- [ ] Changing the value in the UI or through MCP adds a history row. The card keeps the latest value in `estimate_cents`.
+187:1. **Ingest endpoint** `POST /api/ingest/boards`: the harness sends one or many priced boards as JSON. Idempotent per Whatnot break id: resending replaces that board's spots. Authenticated with a long random `INGEST_TOKEN` (Vercel env, server-only; the harness keeps the same value). Rows are written as Dennis's user (`OWNER_USER_ID` env) using the Supabase secret key **on the server only**.
+213:- [ ] Tables `boards`, `board_spots`, `board_requests` with row-level security (Dennis reads; only the server writes ingest rows) and a numbered migration.
+218:- [ ] Secrets: `INGEST_TOKEN` and the Supabase secret key exist only in Vercel env vars and on the harness, never in the repo or browser code.
+240:- Board inventory: `2weiX/breakdata` (`scan/` daily scans, `breaks.csv` per-break rows, `spots/<id>.csv`
+242:  `product`, `boxes` → `boxes`, spot rows → `spots`); `mechanic` derives from `wn_format` +
+246:  the board's own box count × the seller's stated per-box price when the product has no basis row.
+259:- [ ] Server-side eBay OAuth (user token, `sell.inventory` scope). Tokens are stored encrypted per user, refresh automatically, and are never sent to the browser. Keys live only in Vercel env vars: `EBAY_CLIENT_ID`, `EBAY_CLIENT_SECRET`, `EBAY_RUNAME`.
+261:- [ ] It never publishes. Draft only. A `listings` row is saved with the eBay id; the card status stays unchanged until Dennis publishes.
+267:## S12 · Match cards to the eBay catalog ⏳
+268:- [ ] For cards without an ePID: search eBay's catalog by year + set + player + card #, then pick the parallel using the name mapping in the Whatnot project (`ebay-catalog-parallel-mapping.md`).
+271:## 💤 Later: S13 Whatnot integration (selling side; board pricing is S16) · S14 link cards to the break they came from (from Dennis's break trackers) · S15 photo scanning with a review step
+280:| Repo | License | Relevant for | Borrow |
+[0m
+[0m← [0mWrite discussion/claims/C006-inventory-loads-and-filters-client-side-/r02-challenge--harness-nflinv.md
+Wrote file successfully.
+[0m
+Good context. S2 is marked done; the app is a single-user personal inventory tool. Now I have everything I need. Let me write the challenge round.
+Now let me run `bin/sync` to commit and push:
