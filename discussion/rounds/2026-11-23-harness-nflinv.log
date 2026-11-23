@@ -2969,3 +2969,52 @@ Repo untouched (only the pre-existing rounds log modification). Writing the roun
 ☤ Hermes
 Now running bin/sync as instructed.
 ────────────────────────────────────────
+
+💻 $ bin/sync  3.1s
+
+────────────────────────────────────────
+Sync ran clean: reindexed 7 claims, pushed to origin/main. Wait — did sync commit and
+ push my round file? "synced to origin/main" suggests yes. Verify the round file is committed
+/pushed.
+∴ Thought for 1s · Sync ran clean: reindexed 7 claims, pushed to origin/main.
+────────────────────────────────────────
+
+────────────────────────────────────────
+☤ Hermes
+Verifying the sync actually committed and pushed the round.
+────────────────────────────────────────
+
+💻 $ git log -2 --format='%h %s' + 2 commands  0.1s
+
+────────────────────────────────────────
+Committed and pushed (08fc996). The remaining modified file (rounds log) is the pre-existing session
+ log — bin/sync apparently committed a portion and the log keeps appending; it was modified
+ at session start too. Leave it alone; sync owns it.
+
+Done. Report.
+∴ Thought for 1s · Committed and pushed (08fc996).
+────────────────────────────────────────
+
+────────────────────────────────────────
+☤ Hermes
+Done. Round written, synced, pushed (08fc996, origin/main clean except the pre-existing rounds log).
+
+C005 r1 verdict-relevant findings (file: discussion/claims/C005-cold-start-build-fails-opaque-without-en/r01-research--harness-nflinv.md):
+
+- The throw is real: lib/supabase.ts:6-8 throws at module scope without the two NEXT_PUBLIC_* vars. Verified empirically: npm run build with no env files exits 1 (prerender of / fails after a green "Compiled successfully"); npm run dev serves HTTP 500 with the same error.
+- But "opaque" is false: the message names both variables and points at .env.example, with a source-mapped stack to lib/supabase.ts:7 in both build and dev output.
+- The falsifier's condition is met: the documented path succeeds. README's literal cp .env.example .env.local (placeholder key is non-empty) makes the build pass (exit 0, all 7 routes); the Vercel path sets the vars before deploy; the AGENTS.md agent loop (install/test/typecheck) passes with no env at all. There is no CI and README never documents a local npm run build.
+- Residual true kernel: only an undocumented bare next build with zero env hits the failure. A one-line README note covers it; the lazy-client remedy fixes no observed failure.
+- Gaps stated plainly in the file: Vercel build not executed (assumption labeled), runtime-with-placeholder-key untested (no live Supabase calls made, per the Supabase rule), n=1 per scenario, and a turbopack lockfile warning flagged as a machine artifact so it isn't mistaken for the error under test.
+
+No new claims proposed, per the budget note (7 in flight, 6 allowed). Nothing for Dennis to decide; the lazy-client-vs-README-note trade goes to the challenger/adjudicator rounds.
+────────────────────────────────────────
+
+Resume this session with:
+  hermes --resume local-d1924efc5ebc5699edd7b13fddfe297c1a8428f320af3ad2125b87e09f879654
+  hermes -c "Research C005 cold-start build failure claim"
+
+Session:        local-d1924efc5ebc5699edd7b13fddfe297c1a8428f320af3ad2125b87e09f879654
+Title:          Research C005 cold-start build failure claim
+Duration:       3m 46s
+Messages:       73 (1 user, 71 tool calls)
