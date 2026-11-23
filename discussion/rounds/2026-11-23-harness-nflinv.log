@@ -5547,3 +5547,44 @@ Privacy check passes now. Re-run bin/sync. Note: the log continues to be appende
 ☤ Hermes
 Privacy check is clean. Re-running bin/sync for the gate, commit and push.
 ────────────────────────────────────────
+
+💻 $ bin/sync  3.1s
+💻 $ git log --oneline -2 | cat + 1 command  0.1s
+
+────────────────────────────────────────
+Done: committed c0ae594 and pushed. The log shows M again (live transcript keeps appending — that
+'s normal; HEAD log always ends mid-stream). 
+
+Final report. Do NOT write the literals "38022" or "14000" adjacent to words (they
+'d land in the log again). I can write them safely if I break them, but simplest to avoid
+ digits or write them with a break... I'll refer to them obliquely. Actually "2610"/
+"2820" are 4-digit, safe. The two 5-digit ones: the discussion number and char limit — I'll write "discussion 
+380_22" style? Cleaner: just say "the GitHub discussion" and "a char-limit figure". Keep
+ it simple.
+∴ Thought for 1s · Done: committed c0ae594 and pushed.
+────────────────────────────────────────
+
+────────────────────────────────────────
+☤ Hermes
+Done. Round filed, gated, committed as c0ae594 and pushed to origin/main.
+
+What the research found (r01, role researcher):
+
+- Half the claim holds: Supabase's tokens are standard project JWTs carrying the user's claims plus client_id, so existing RLS applies to tool-call traffic unchanged. No counter-evidence found; the app just has to do its own signature/issuer/client-id validation since every token's audience claim is the generic one.
+- The other half is in real danger. An open Supabase bug (created 2026-09-20, last updated 2026-11-05) makes the consent step return 400 on any of three triggers: a public client, the offline_access scope, or the RFC 8707 resource parameter. Claude's documented flow sends resource unconditionally and requests offline_access whenever the server advertises it, which this project's live metadata does. Pre-registering a confidential client avoids only one of the three triggers. If that bug still reproduces, the falsifier's flow-failure clause is met and S7 needs its own OAuth layer.
+- Prerequisite found: the OAuth server is disabled on the live project right now (public discovery endpoint returns feature-disabled). Enabling it is a dashboard action only Dennis can take.
+- Stated gaps: no first-hand report of the full claude.ai flow either succeeding or failing against Supabase; DCR advertisement in the metadata unverifiable while disabled; bug-reproducibility on current build unverified.
+
+Privacy-check incident, resolved: bin/sync refused the first push because the live transcript log captured my own reasoning quoting a 5-digit GitHub discussion number and a 5-digit char-limit figure, which match the postcode-leak patterns. The script's docstring sanctions editing the file for false positives; I broke the digit runs in the log, the check then passed, and I avoided re-writing those literals afterward. Nothing personal was ever involved.
+
+What would settle the claim: Dennis enables OAuth Server on the project, then a scripted probe with Claude's exact parameters against a test project watching for the bug's 400 at the consent step.
+────────────────────────────────────────
+
+Resume this session with:
+  hermes --resume local-313f3e5a8f9da5246a0a3e0894f9aca264b23bcfba2e10ebf75ee0de00b848b9
+  hermes -c "Research Supabase OAuth 2.1 claim S7"
+
+Session:        local-313f3e5a8f9da5246a0a3e0894f9aca264b23bcfba2e10ebf75ee0de00b848b9
+Title:          Research Supabase OAuth 2.1 claim S7
+Duration:       2m 5s
+Messages:       51 (1 user, 49 tool calls)
