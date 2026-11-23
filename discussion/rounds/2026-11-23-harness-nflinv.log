@@ -6994,3 +6994,15 @@ TASK  C004-duplicate-grouping-merges-differing-card   role=challenger  round=2
 Wrote file successfully.
 [0m
 I have all the information I need. Now I'll write the challenge round.
+[0m$ [0mbin/sync
+reindexed 10 claims, 0 decisions
+synced to origin/main
+[0m
+Done.
+
+Wrote `discussion/claims/C004-duplicate-grouping-merges-differing-card/r02-challenge--harness-nflinv.md` and ran `bin/sync` (gate passed, synced to origin/main).
+
+Summary of the challenge:
+- **Conceded:** the 12-field key omits money columns, the row renders `g[0]`, totals sum all members, and a divergent pair is constructible and reachable.
+- **Argued against the claim** with three strong objections (user-controlled grouping toggle + detail page escape hatch; display inconsistency ≠ data corruption; no requirement states rows must aggregate money) and three moderate ones (pathological example vs. typical divergence; ×N badge + total line disambiguate; the implied fix creates new sort/export/mobile inconsistencies).
+- Each objection names the evidence that would settle it (usability signal, live-frequency query, a stated aggregation semantic, design proposal for the fix).
