@@ -7034,3 +7034,25 @@ r02-challenge--kimi-k3-1-pro.md
 [0m
 The task named the output file as `r02-challenge--harness-nflinv.md` but the attribution instruction says the filename tag must be the model (`kimi-k3-1-pro`), "not the filename after `--`, which is also the model." Let me reconcile: the task's "Write your work to:" line uses `harness-nflinv` as a placeholder, but the binding attribution rule says filename tag = model = `kimi-k3-1-pro`. The r01 file used `--harness-nflinv` but that was the researcher's harness convention; the binding rule here is explicit that the tag after `--` is the model. I'll rename to the correct tag.
 Good — I had already written it under the correct `kimi-k3-1-pro` tag; no rename needed. Now run `bin/sync`.
+[0m$ [0mcd /home/dennis/nflinventory && bin/sync
+reindexed 10 claims, 0 decisions
+synced to origin/main
+[0m
+Done. Round 2 (challenge) filed and synced.
+
+**What I did:**
+- Read AGENTS.md, the claim, and r01 (researcher `z-ai/glm-5.3-flash`).
+- Independence check passed: challenger model `moonshotai/kimi-k3.1-pro:free` ≠ r01 model, and no prior challenger round on this claim.
+- Wrote `discussion/claims/C005-cold-start-build-fails-opaque-without-en/r02-challenge--kimi-k3-1-pro.md` with frontmatter `model: moonshotai/kimi-k3.1-pro:free`, `harness:` set separately, filename tag = model.
+- Ran `bin/sync` → reindexed 10 claims, synced to origin/main. Gate passed clean (no quarantine).
+
+**Argument AGAINST the claim (rated):**
+- **O1 STRONG** — "Opaque" is false: the error names both vars and `.env.example`, source-mapped to `lib/supabase.ts:7`. Only blemish is ordering after "Compiled successfully".
+- **O2 STRONG** — The claim's own falsifier is satisfied: README local path (run B), Vercel path, and the AGENTS.md turn-start trio (run C) all succeed. The failure (run A) only fires on an *undocumented* action.
+- **O3 MODERATE** — "Lazy client" is the wrong remedy: defers build-time throw to a runtime 500, a regression.
+- **O4 MODERATE** — Not decision-ready: `decides:` is literally TODO, and hit-frequency is unmeasured.
+- **O5 WEAK** — The true residual kernel is a one-line README note, not a code fix.
+
+**Concessions:** C1–C5 concede the module-scope throw, the prerender timing, and that runs A and D do fail — I did not dispute any captured output.
+
+Each objection names what evidence would settle it. Net: claim should not stand as titled; at most a trivial docs touch-up once `decides:` names a real story.
