@@ -2,6 +2,14 @@
 
 Newest entry first. Every agent adds one entry at the end of its turn (format in `AGENTS.md`).
 
+## 2026-11-23 · Claude (with Dennis) · Agents ship their own work
+Status: Done
+Branch / PR: story/merge-policy
+What changed: PR #1 (Price field) merged and live. AGENTS.md has a new "Shipping" section: agents merge their own PR once Done, wait for the Vercel deploy, smoke-check /login, and revert on failure. Additive migrations allowed; destructive ones wait for Dennis.
+Evidence (tests, build, manual checks): Vercel status `success` on a10b841.
+Open issues / next step: S7 MCP endpoint.
+Anything Dennis must do (keys, settings, decisions): Nothing. Destructive DB changes will show up here when an agent needs one.
+
 ## 2026-11-23 · Claude (with Dennis) · Deploy + "Price" (last eBay comp) field
 Status: Done
 Branch / PR: story/comp-price (merged to main)

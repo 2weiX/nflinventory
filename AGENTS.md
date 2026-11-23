@@ -16,7 +16,7 @@ and make it easy for the next agent to pick up.
   Next.js 16 differs from older versions: check `node_modules/next/dist/docs/` before using an API you're unsure of.
 - Money is always integer cents in the database and in `lib/`. Convert to and from dollars only at the edges (UI, MCP arguments and results).
 - Pure logic goes in `lib/` with tests in `lib/*.test.ts` (run with `node --test`, no extra test framework).
-- Schema changes: add `supabase/migrations/000N_name.sql` (never edit an applied migration), apply it to the project, and enable row-level security on new tables.
+- Schema changes: add `supabase/migrations/000N_name.sql` (never edit an applied migration), apply it to the project, and enable row-level security on new tables. Only additive changes; see "Shipping" for destructive ones.
 - Never put secrets in the repo, in `NEXT_PUBLIC_*` variables or in client code. The repo is **public**.
 - Never delete or bulk-rewrite real data in the database. Tests use rolled-back transactions or a throwaway user that you delete afterwards.
 - Never publish anything to eBay or Whatnot, never buy, bid or message anyone. eBay integration creates drafts only.
@@ -24,6 +24,24 @@ and make it easy for the next agent to pick up.
 ## Done means
 Everything in "QA: Definition of Done" in `docs/STORIES.md`. If you can't finish, leave the branch in a state
 where the checks pass, and say exactly what's left.
+
+## Shipping: agents merge, verify and roll back (no human needed)
+Dennis does not review pull requests. When a story meets "Done means", the agent that built it ships it:
+1. Merge its own PR into `main` (squash): `gh api -X PUT repos/2weiX/nflinventory/pulls/<n>/merge -f merge_method=squash`.
+   Only merge a PR whose checks pass and that has no conflicts. Never merge another agent's open PR, never force-push `main`.
+2. Vercel deploys `main` automatically. Wait for it: `gh api repos/2weiX/nflinventory/commits/<sha>/status` until the
+   `Vercel` context is `success` (about a minute).
+3. Smoke-check the live app: https://nflinventory-weld.vercel.app/login must load and show the sign-in form.
+4. If the deploy fails or the smoke check fails: roll back at once with `git revert <sha>` on a `revert/<branch>` branch,
+   merge it the same way, and confirm the next deploy is `success`. Then log what broke in `docs/HANDOFF.md` and leave
+   the story In progress.
+5. Any agent that finds `main` broken (failed deploy, failing tests, dead login page) reverts the last merge first and
+   investigates second.
+
+Database changes follow a stricter rule, because a revert doesn't undo them:
+- **Additive** migrations (new table, new nullable column, new index, new view) may be applied and merged by the agent.
+- **Destructive** ones (drop or rename a column or table, change a type, rewrite or delete existing rows) are never
+  applied by an agent. Leave the migration file in the PR unmerged and put it under "Anything Dennis must do".
 
 ## End of every turn
 Add an entry at the **top** of `docs/HANDOFF.md`:
