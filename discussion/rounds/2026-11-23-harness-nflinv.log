@@ -7226,3 +7226,16 @@ status=200
 Wrote file successfully.
 [0m
 Live URL returns 200. Now I can write the challenge.
+[0m$ [0mbin/sync
+reindexed 10 claims, 0 decisions
+synced to origin/main
+[0m
+Round filed and synced.
+
+**Summary of the challenge:**
+
+- **Strong objection:** The claim is false at HEAD. `docs/HANDOFF.md:17` records `https://nflinventory-weld.vercel.app` (entry dated 2026-11-23), `AGENTS.md:34` and `:88` codify the same URL, and `curl https://nflinventory-weld.vercel.app/login` returns **200** today. R1 anchored to commit `1769823` (2026-11-21) and missed three newer HANDOFF commits (`ded0099`, `27f303b`, `246828e`).
+- **Strong objection:** The claim's own falsifier (Branch A: "Dennis supplies the URL") has fired. By the claim's settling rule, this is resolved, not open.
+- **Moderate objection:** Item 6's *procedural* half (load the deployed preview) is now evidenced via Vercel `success` on a10b841; only the visual matrix at desktop+375px remains undocumented.
+- **Concessions:** R1's baseline history is accurate; `nflinventory.vercel.app` (bare subdomain) is genuinely an unrelated project; no full visual pass is yet recorded; the staleness was a snapshot-pinning artifact, not a research-integrity failure.
+- **Recommended verdict:** settle as falsified (option 1), with a HANDOFF note that story agents must record the visual pass explicitly going forward.
