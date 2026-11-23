@@ -1661,3 +1661,365 @@ Session:        local-5c9f232e412f322157aa81ad2861b1ededd4ff08191662e37f77607402
 Title:          Research C003 import sale insert claim
 Duration:       2m 34s
 Messages:       49 (1 user, 47 tool calls)
+[04:03] round 3/8  role=researcher  via bin/hermes-round.sh
+NOTE  7 claims in flight, budget allows 6. Finish open claims before proposing more.
+
+TASK  C004-duplicate-grouping-merges-differing-card   role=researcher  round=1
+hermes: a source update could not be finished automatically (6 attempts); run `hermes update` from a shell to finish it
+Query: Read AGENTS.md, then carry out exactly this one task and write the one 
+file it names.
+
+NOTE  7 claims in flight, budget allows 6. Finish open claims before proposing 
+more.
+
+TASK  C004-duplicate-grouping-merges-differing-card   role=researcher  round=1
+CLAIM Duplicate grouping merges differing cards; group row shows g[0]
+STATUS open  falsifier: Groups may contain cards differing in money fields not 
+covered by the grouping key; the row shows g[0] while totals use all members - 
+needs a concrete divergent pair to file.
+
+Gather the evidence for this claim. No prior rounds carry a model field.
+
+Label every figure with its date, the population it refers to, its sample size 
+and a source link. Flag any
+source with a commercial interest in the answer. Where the evidence does not 
+exist, say so plainly and stop
+looking - an explicit gap is a finding, a plausible invention is damage.
+
+Write your work to:  
+discussion/claims/C004-duplicate-grouping-merges-differing-card/r01-research--ha
+rness-nflinv.md
+Use the round frontmatter in AGENTS.md. Then run bin/sync.
+
+────────────────────────────────────────
+Let me read AGENTS.md first to understand the round frontmatter format and the discussion loop
+ rules, then look at the claim and the codebase for the grouping logic.
+∴ Thought for 1s
+────────────────────────────────────────
+
+📖 Read AGENTS.md  0.6s
+🔎 Find group  0.7s
+
+────────────────────────────────────────
+AGENTS.md mentions "the round frontmatter in AGENTS.md" but I don't see a frontmatter template in AGENTS.md. Maybe
+ there's more in the discussion folder or an existing claims dir with examples. Let me look at discussion
+/claims for existing claims and any round files with frontmatter, plus find the duplicate
+ grouping code.
+∴ Thought for 1s · AGENTS.md mentions "the round frontmatter in AGENTS.md" but I don't see…
+────────────────────────────────────────
+
+💻 $ ls /home/dennis/nflinventory/discussion/ /home/dennis/nflinventory/discussion/claims/ 2>/dev/null + 1 command
+🔎 Grep group|duplicate|dedup  0.2s
+💻 $ ls /home/dennis/nflinventory/discussion/claims/C004-duplicate-grouping-merges-differing-card/ + 2 commands
+🔎 Grep g\[0\]|g\[1\]  0.2s
+
+────────────────────────────────────────
+Let me look for the actual grouping code in the app. Search for "g[0]" in app/ or lib/.
+ Also check an existing r01 file from another claim to see the round frontmatter format.
+∴ Thought for 0s · Let me look for the actual grouping code in the app.
+────────────────────────────────────────
+
+🔎 Grep g\[0\]
+💻 $ find /home/dennis/nflinventory/discussion/claims -name '*.md' + 1 command  0.1s
+
+────────────────────────────────────────
+Let me read the app/page.tsx grouping code, and an existing r01-research file to copy
+ the round frontmatter format.
+∴ Thought for 0s
+────────────────────────────────────────
+
+📖 Read page.tsx
+📖 Read r01-research--harness-nflinv.md
+
+────────────────────────────────────────
+Now I understand the format. My task: research claim C004 — duplicate grouping merges
+ differing cards; the group row shows g[0]. The falsifier: "Groups may contain cards differing
+ in money fields not covered by the grouping key; the row shows g[0] while totals use
+ all members — needs a concrete divergent pair to file."
+
+So the falsifier needs a concrete divergent pair. The grouping key at app/page.tsx:21-22
+ covers: set_name, year, card_number, player_names, parallel, serial_to, serial_number, is
+_auto, is_patch, status, grader, grade.
+
+Fields NOT in the key but displayed or summed:
+- Money fields: estimate_cents, list_price_cents — displayed from g[0] at lines 211-
+212, not in key.
+- Also displayed from g[0]: team (line 201), grading_candidate (205), ebay_epid/ebay
+_catalog_title (213). Not in key.
+- Totals (78-81) sum estimate_cents over all filtered members.
+
+Let me check lib/types.ts for the Card type to enumerate all fields. And check C001's verdict
+ — it already touched this (line 31 of r03-verdict). But my claim is separate and needs
+ a concrete divergent pair.
+
+"Needs a concrete divergent pair to file" — a concrete example: two cards identical
+ on all 12 key fields but differing in estimate_cents, list_price_cents, team, grading_candidate, ebay_epid.
+ I can construct that pair from the schema (migration) + types. I cannot query the live DB
+ (Supabase rule). So the pair is a constructed example grounded in the schema — real
+ fields, real types.
+
+Let me read lib/types.ts and the migration to enumerate fields precisely. Also check what C001
+ r02/r03 said about this to not duplicate — but my round is independent. Also check the git
+ commit hash for the population statement.
+∴ Thought for 3s · Now I understand the format.
+────────────────────────────────────────
+
+📖 Read types.ts
+💻 $ git log -1 --format='%H %cI' + 1 command
+
+────────────────────────────────────────
+Now let me check the cards schema in 0001_init.sql to see the exact column list, and
+ also the card editor page (app/cards/[id]/page.tsx) to see which fields are user
+-editable (so the divergent pair is reachable in practice, not just theoretical). Let
+ me also check the importer CardDraft fields.
+∴ Thought for 1s · Now let me check the cards schema in 0001_init.sql to see the exact col…
+────────────────────────────────────────
+
+📖 Read 0001_init.sql L20-89
+🔎 Grep CardDraft|estimate_cents|list_price_cents
+
+────────────────────────────────────────
+I have all the evidence. Key facts:
+
+- Grouping key (app/page.tsx:21-22): set_name, year, card_number, player_names, parallel
+, serial_to, serial_number, is_auto, is_patch, status, grader, grade — 12 fields.
+- Fields on Card NOT in key but shown from g[0] in the row: team (201), subset (in
+ search hay only), grading_candidate (205), estimate_cents (211), list_price_cents (212), ebay_epid +
+ ebay_catalog_title (213), is_rookie? (variantLabel — need to check lib/format.ts
+ variantLabel), jersey_number, cost_cents, auto_type, notes, ebay_reference_ids, price_source_url.
+- Row shows c.estimate_cents and c.list_price_cents from g[0] (lines 211-212) while the group may
+ contain members with different values; the header total (79) sums estimate_cents of
+ ALL filtered members. Also sort by estimate uses b[0]/a[0] estimate (line 70).
+- Totals: filtered.reduce estimate_cents — all members, line 79.
+
+Concrete divergent pair (constructible; cannot query live DB per Supabase rule):
+Card A and Card B identical on all 12 key fields (e.g. 2024 Prizm, #201 CJ Stroud, Gold
+ parallel /199, no auto/patch, in_stock, no grader) but A: estimate_cents 5000, list 
+6500, team "Texans"; B: estimate_cents 3000, list 4000, team null. Row shows A's values
+ (g[0] — whichever loads first by created_at order), qty ×2, header total shows 8000 est
+. So the row's value (5000) contradicts 2× its own displayed value under the total.
+
+Reachability: can such a pair actually arise in the data? Import path — two rows identical
+ in the key fields but different estimate/list_price columns. parseCents per-row (
+lib/importer.ts:263-264), so yes — a sheet with the same card listed twice with different
+ estimates groups together. Manual editor — editing one card's estimate without the
+ other (app/cards/[id]/page.tsx) diverges a previously-identical pair. Let me quickly
+ verify the manual editor lets you edit estimate_cents and team. Also check variantLabel in format.ts
+ to see what it displays.
+
+Let me check app/cards/[id]/page.tsx briefly for editable fields and lib/format.ts variantLabel. Then
+ also check C001 r02/r03 already noted this (I can cite that the claim was surfaced
+ in C001's round but filed separately — useful context but my round must stand alone).
+
+Also I should check the group key null handling: join("|") with undefined → "undefined
+" strings? c.parallel undefined joins as "" actually — [undefined].join("|") gives ""
+ for undefined elements. Fine, not needed.
+
+One more evidence point: since cards are fetched ordered by created_at (loadAllCards line
+ 14), g[0] is deterministically the oldest-created member of the group. That's a nice
+ precision point.
+∴ Thought for 6s · I have all the evidence.
+────────────────────────────────────────
+
+🔎 Grep variantLabel|export  0.2s
+🔎 Grep estimate_cents|list_price_cents|team|name="  0.2s
+
+────────────────────────────────────────
+I have enough. Let me check variantLabel quickly to know exactly what fields it displays (whether
+ is_rookie etc. appear), then also verify C001's r03 wording on the "realistic divergent"
+ case to reference properly. Actually I should read variantLabel lines 16-35.
+∴ Thought for 1s · I have enough.
+────────────────────────────────────────
+
+📖 Read format.ts L16-35
+
+────────────────────────────────────────
+Important extra finding: `is_rookie` is NOT in the group key but IS displayed via
+ variantLabel ("RC" badge, line 29 of format.ts, used at app/page.tsx:204). Same for
+ `auto_type` (displayed via variantLabel at line 30). So the row can even show wrong
+ identity labels, not just money. But the claim is specifically about money fields; the row
+ shows g[0].estimate_cents/list_price_cents while totals sum all members.
+
+Now write the round file. The falsifier says "needs a concrete divergent pair to file" — I supply
+ one constructed from schema-valid fields, noting it's constructed (no live query
+ per Supabase rule), and the reachability paths (importer parses per-row money independently
+; manual editor lets one card's money be edited while its duplicate keeps old values).
+
+Key evidence table:
+
+1. Grouping key has 12 fields: app/page.tsx:21-22 — set_name, year, card_number, player
+_names, parallel, serial_to, serial_number, is_auto, is_patch, status, grader, grade.
+2. Money fields not in key: estimate_cents, list_price_cents (and cost_cents) — 0001_init
+.sql:46-48.
+3. Row renders g[0]: line 190 `const c = g[0]`; value column 211 shows c.estimate_cents; ask column
+ 212 shows c.list_price_cents — from the representative only.
+4. Totals sum all filtered members: lines 78-81, est = filtered.reduce over estimate
+_cents.
+5. g[0] is deterministically the oldest-created member: loadAllCards orders by created_at (line 14)
+ and groups preserve insertion order — so the displayed value is the first-inserted card's
+, regardless of which is representative of the group.
+6. Sort also uses g[0]: line 70 estimate sort compares b[0]/a[0] estimate_cents —
+ sorting "Value high→low" ranks a group by one member's value while the total counts both
+.
+7. Divergent pair is schema-valid and reachable:
+   - Importer: per-row parseCents (importer.ts:263-264) — two identical rows with
+ different estimate columns import with different estimate_cents.
+   - Manual editor: editing one card's money (cards/[id]/page.tsx:55-56) while its key
+-identical twin keeps old values.
+8. Not just money: variantLabel displays is_rookie and auto_type (format.ts:29-30) which
+ are also not in the key — a group can show "RC" because g[0] is a rookie while the second
+ member isn't. Similarly team (page.tsx:201), grading_candidate (205), ebay_epid (213). This
+ strengthens the claim beyond money.
+
+Concrete divergent pair (constructed example, schema-valid):
+- A: year 2024, brand Topps, set_name Chrome, card_number 161, player_names "C.J.
+ Stroud", parallel "Refractor", serial_to 499, serial_number 12, is_auto false, is_patch false
+, status in_stock, grader null, grade null; estimate_cents 8000, list_price_cents 9
+500, team "Houston Texans", is_rookie false.
+- B: same key fields; estimate_cents 5500, list_price_cents null, team "Texans", is
+_rookie true.
+Group row shows A's ×2, Value 80.00, Ask 95.00, RC badge? variantLabel(g[0]) with is
+_rookie false → no RC. Totals: est 13,500 (80+55). Qty ×2 vs Value 80.00 contradicts
+ total.
+
+Wait — check: does the C001 verdict say "the realistic divergent..." — it said for
+ same key fields omitted identity fields almost always match. That challenge is on
+ identity fields; money fields are different — estimates on hand-entered duplicates
+ will realistically differ (that's how one learns the value of the same card from
+ two sources). I can note the counter to that reading: money fields are exactly the ones
+ users edit per-copy.
+
+Also note null handling in groupKey: [null, ...].join("|") — null and undefined both
+ become "" in join, so null parallel and "" parallel group together; that's a side note
+ not needed.
+
+Explicit gaps:
+- Live DB not queried (Supabase rule): I cannot show an existing divergent pair in Dennis
+'s data. Constructed pair is schema-valid; reachability via import/edit shown.
+- Frequency unmeasured.
+- Whether the intended behavior is wrong is a product decision — arguably grouping
+ is a display convenience and showing g[0] is intended; the claim's harm is silent
+ contradiction with totals.
+
+Also the note says "No prior rounds carry a model field" — this is round 1; front
+matter model field written by dispatcher... wait, attribution is binding, written
+ by the dispatching adapter — but the task tells me to use the round frontmatter in
+ AGENTS.md. C003's r01 has `model: z-ai/glm-5.3-flash` and `harness: hermes (Ultron ...)
+`. I'll follow that template exactly. Hmm, "a model never writes its own model: field" — but the C
+003 researcher round has one. The instruction says attribution is binding, written by the dispatching adapter.
+ In C003 the researcher wrote it (or the adapter did). The task says "Use the round
+ frontmatter in AGENTS.md" — AGENTS.md doesn't actually contain a frontmatter template; the
+ precedent is C003 r01. I'll match that. The task prompt itself declares role=researcher, round
+=1; I'm on glm-5.3-flash per the runtime. I'll include model as in the precedent — that's what
+ the loop machinery expects (bin/sync may check). Let me check what bin/sync does with
+ round files regarding model fields... The log file rounds/2026-11-23-harness-nfl
+inv.log at line 1717 shows my own search commands — meaning this conversation is being logged by
+ the loop. Let me quickly check bin/sync or the adapter to see if model is expected in
+ the file.
+∴ Thought for 14s · Important extra finding: `is_rookie` is NOT in the group key but IS dis…
+────────────────────────────────────────
+
+💻 $ ls bin/ + 1 command  0.2s
+💻 $ cat bin/hermes-round.sh  0.1s
+
+────────────────────────────────────────
+The dispatcher (`bin/next`) tells each model to write its own `model:` field ("Name
+ your model in `model:` exactly as discussion/roster declares it"). Let me check the
+ roster for the researcher role to get the exact model string.
+∴ Thought for 1s · The dispatcher (`bin/next`) tells each model to write its own `model:`…
+────────────────────────────────────────
+
+💻 $ cat discussion/roster  0.1s
+
+────────────────────────────────────────
+☤ Hermes
+Roster confirms model=z-ai/glm-5.3-flash for the researcher seat. I have all the evidence; writing the round file now.
+────────────────────────────────────────
+
+✍️ Write /home/dennis/nflinventory/discussion/claims/C004-duplicate-grouping-merges-differing-card/r01-research--harness-nflinv.md
+│ discussion/claims/C004-duplicate-grouping-merges-differing-card/r01-research--harness-nflinv.md
+│ @@ -0,0 +1,119 @@
+│ +---
+│ +claim: C004-duplicate-grouping-merges-differing-card
+│ +round: 1
+│ +role: researcher
+│ +model: z-ai/glm-5.3-flash
+│ +harness: hermes (Ultron on Dennis's Linux harness)
+│ +date: 2026-11-23
+│ +---
+│ +
+│ +# R1 research: duplicate grouping merges differing cards; group row shows g[0]
+│ +
+│ +Method: traced the grouping path end to end on the harness, on 2026-11-23 (CET).
+│ +Population for every figure below = this repo's source tree at commit `d66bffa`
+│ +on `main` (`git log -1 --format='%H %cI'`: 2026-11-23T04:03:42+01:00). Every
+│ +citation is a file+line I re-read today. The live Supabase project was
+│ +deliberately not touched (discussion agents never touch it, per AGENTS.md), so
+│ +no live divergent pair could be pulled from Dennis's data; section 4 states
+│ +that gap and what the code proves instead. Prior rounds on this claim: none
+│ +(claim.md round: 0, no round files existed when I started). C001 r02/r03
+│ +discussed this grouping from a survey angle and left it unresolved there; this
+│ +round stands on its own citations and does not lean on those files.
+│ +
+│ +## 1. The claim, step by step
+│ +
+│ +| # | Fact | Population / sample | Source |
+│ +|---|---|---|---|
+│ +| 1.1 | The grouping key is exactly 12 fields: `set_name, year, card_number, player_names, parallel, serial_to, serial_number, is_auto, is_patch, status, grader, grade` | 1 of 1 grouping function in the app (`groupKey`, the only key built for the inventory table) | app/page.tsx:21-22, read 2026-11-23 |
+│ +| 1.2 | The cards table carries money columns not in that key: `cost_cents`, `estimate_cents`, `list_price_cents` (plus identity fields not in the key: `team`, `subset`, `jersey_number`, `is_rookie`, `auto_type`, `grading_candidate`, `ebay_*`, `notes`) | 1 of 1 migrations in the repo; 12 key fields (1.1) vs ~15 card columns absent from it | supabase/migrations/0001_init.sql:21-58, read 2026-11-23 |
+│ +| 1.3 | The row is rendered from the group's first member: `const c = g[0]` (line 190). The Value column prints `money(c.estimate_cents)` (line 211) and the Ask column `money(c.list_price_cents)` (line 212) — representative's values only, regardless of the other members | 1 of 1 render path for the group row | app/page.tsx:189-216, read 2026-11-23 |
+│ +| 1.4 | The header total sums ALL filtered members, not the representatives: `filtered.reduce((s, c) => s + (c.estimate_cents ?? 0), 0)` (line 79), count `filtered.length` (line 80) | 1 of 1 totals path; totals depend on `filtered` (lines 44-60), not on `rows`/groups | app/page.tsx:78-81, read 2026-11-23 |
+│ +| 1.5 | `g[0]` is deterministically the oldest-created member of the group: cards are fetched ordered by `created_at` (line 14) and `groups.set(k, [...(get(k) ?? []), c])` (line 66) preserves insertion order, so the first card that entered the group is the representative | 1 fetch path + 1 group-building path | app/page.tsx:13-14, 62-67, read 2026-11-23 |
+│ +| 1.6 | Sorting by "Value (high → low)" also ranks groups by one member only: `estimate: (a, b) => (b[0].estimate_cents ?? -1) - (a[0].estimate_cents ?? -1)` (line 70). A group whose members differ by $50 is ranked as if it were one card worth `g[0]`'s value | 4 of 4 sort keys use `g[0]` (lines 70-73) | app/page.tsx:69-75, read 2026-11-23 |
+│ +| 1.7 | The Qty cell (`×N`, line 209) is the only group-aware signal in the row. Nothing marks the row as "representative's values" and nothing aggregates Value/Ask across the group | 1 row component | app/page.tsx:209-212, read 2026-11-23 |
+│ +
+│ +Chain, assembled from 1.1 + 1.3 + 1.4: if a group contains two cards equal on
+│ +the 12 key fields (1.1) but different in `estimate_cents` (a column not in the
+│ +key, 1.2), the row displays one member's value (1.3) while the header total
+│ +counts both members' values (1.4). The row's Value contradicts the total it
+│ +sits under, silently (1.7). Same for Ask (1.3, line 212) — a field with no
+│ +total at all, so no contradiction is even visible for it.
+│ +
+│ +## 2. The concrete divergent pair the falsifier asks for
+│ +
+│ +The falsifier says: "needs a concrete divergent pair to file." Here it is.
+│ +Constructed, schema-valid, every field real (0001_init.sql:21-58); I could not
+│ +query live data for a real-world instance (section 4, gap 1).
+│ +
+│ +Pair A/B, identical on all 12 key fields:
+│ +
+│ +| Field | Card A | Card B | In key? |
+│ +|---|---|---|---|
+│ +| year / brand / set_name | 2024 / Topps / Chrome | same | yes |
+│ +| card_number / player_names | 161 / C.J. Stroud | same | yes |
+│ +| parallel / serial_to / serial_number | Refractor / 499 / 12 | same | yes |
+│ +| is_auto / is_patch | false / false | same | yes |
+│ +| status | in_stock | same | yes |
+│ +| grader / grade | null / null | same | yes |
+│ +| is_rookie | false | true | **no** |
+│ +| estimate_cents | 8000 ($80.00) | 5500 ($55.00) | **no** |
+│ +| list_price_cents | 9500 ($95.00) | null | **no** |
+│ +| team | Houston Texans | Texans | **no** |
+│ +
+│ +Rendered with grouping on: one row, Qty ×2, Value $80.00, Ask $95.00, no RC
+│ +badge (A is g[0] — oldest by created_at, 1.5). Header: 2 cards · est. value
+│ +$135.00 (80 + 55). The row's Value is neither member's group value, the total
+│ +is not the sum of what the row displays (80 × 2 = 160 ≠ 135), and B's rookie
+│ +status is invisible because variantLabel reads g[0]'s `is_rookie`
+│ +(lib/format.ts:29, called at app/page.tsx:204). Nothing in the row hints any
+│ +of this exists (1.7).
+│ +
+│ +## 3. Reachability: how such a pair arises in real use
+│ +
+│ +Two independent paths produce key-identical cards with differing money, no
+│ +import bug required:
+│ +
+│ +- **Import:** the importer parses `estimate` and `list_price` per row
+│ +  independently (`parseCents(get("estimate"))`, `parseCents(get("list_price"))`,
+│ +  lib/importer.ts:263-264, read 2026-11-23). A sheet listing the same card
+│ … omitted 41 diff line(s) across 1 additional file(s)/section(s)
+
+────────────────────────────────────────
+☤ Hermes
+Round file written. Running bin/sync as instructed:
+────────────────────────────────────────
