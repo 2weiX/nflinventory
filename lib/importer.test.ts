@@ -28,7 +28,7 @@ test("guesses every column of the existing sheets", () => {
     Patch: "is_patch",
     "Player Name(s)": "player_names",
     Team: "team",
-    PRICE: "list_price",
+    PRICE: "comp",
     "PRICE ESTIMATE": "estimate",
     "GRADING?": "grading_candidate",
     "SCP link": "price_source_url",
@@ -85,6 +85,7 @@ test("full Flagship row", () => {
   assert.equal(r.card.card_number, "WC-9");
   assert.equal(r.card.serial_to, 50);
   assert.equal(r.card.estimate_cents, 7707);
+  assert.equal(r.card.comp_cents, null);
   assert.equal(r.card.list_price_cents, null);
   assert.equal(r.card.ebay_epid, "6101571848");
   assert.equal(r.card.grading_candidate, "yes");

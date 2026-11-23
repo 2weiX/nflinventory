@@ -67,7 +67,7 @@ about what the stories should be. Its rules:
 
 ## Project facts
 - Supabase project `nflinventory`, ref `ngxfvhlbrhlqarpwavcf` (eu-west-1). Publishable key and URL are in `.env.example`.
-- Hosting: Vercel (project imported from `2weiX/nflinventory`, branch `main`).
+- Hosting: Vercel project `nflinventory`, live at https://nflinventory-weld.vercel.app (auto-deploys `main`). Supabase auth Site URL and redirect `https://nflinventory-weld.vercel.app/**` point there; public sign-ups are off.
 - Dennis's own MCP "football" (sets, checklists, odds, box prices, card prices) runs on his Hermes harness
   at `dennis.taila812b8.ts.net/cc/mcp` (funnel) and `127.0.0.1:8742/mcp` locally. Caps: 20 requests/minute
   per token, 30 s statement timeout, read-only (SELECT-only role). It serves, as of 2026-11-20: Flagship 2026

@@ -12,7 +12,7 @@ const EMPTY: CardDraft = {
   year: 2026, brand: "Topps", set_name: "", subset: null, card_number: "", player_names: "", team: null,
   jersey_number: null, parallel: null, serial_to: null, serial_number: null, is_rookie: false, is_auto: false,
   auto_type: null, is_patch: false, grader: null, grade: null, grading_candidate: null, cost_cents: null,
-  estimate_cents: null, list_price_cents: null, status: "in_stock", ebay_epid: null, ebay_catalog_title: null,
+  comp_cents: null, estimate_cents: null, list_price_cents: null, status: "in_stock", ebay_epid: null, ebay_catalog_title: null,
   ebay_reference_ids: null, price_source_url: null, notes: null,
 };
 
@@ -24,7 +24,7 @@ export default function CardPage() {
   const isNew = id === "new";
   const router = useRouter();
   const [card, setCard] = useState<CardDraft | null>(isNew ? EMPTY : null);
-  const [money_, setMoney] = useState({ cost: "", estimate: "", list: "" });
+  const [money_, setMoney] = useState({ cost: "", comp: "", estimate: "", list: "" });
   const [sales, setSales] = useState<Sale[]>([]);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -35,7 +35,7 @@ export default function CardPage() {
       if (error) return setMsg(error.message);
       const c = data as Card;
       setCard(c);
-      setMoney({ cost: centsToInput(c.cost_cents), estimate: centsToInput(c.estimate_cents), list: centsToInput(c.list_price_cents) });
+      setMoney({ cost: centsToInput(c.cost_cents), comp: centsToInput(c.comp_cents), estimate: centsToInput(c.estimate_cents), list: centsToInput(c.list_price_cents) });
     });
     supabase.from("sales").select("*").eq("card_id", id).order("sold_at").then(({ data }) => setSales((data as Sale[]) ?? []));
   }, [id, isNew]);
@@ -52,6 +52,7 @@ export default function CardPage() {
     const row = {
       ...card,
       cost_cents: toCents(money_.cost),
+      comp_cents: toCents(money_.comp),
       estimate_cents: toCents(money_.estimate),
       list_price_cents: toCents(money_.list),
     };
@@ -63,7 +64,7 @@ export default function CardPage() {
     if (andNew) {
       // keep set + player context for fast entry of the next card
       setCard({ ...EMPTY, year: card.year, brand: card.brand, set_name: card.set_name, team: card.team });
-      setMoney({ cost: "", estimate: "", list: "" });
+      setMoney({ cost: "", comp: "", estimate: "", list: "" });
       setMsg("Saved. Next card:");
       if (!isNew) router.push("/cards/new");
       return;
@@ -145,8 +146,9 @@ export default function CardPage() {
             </select>
           </Field>
           <Field label="Cost ($)"><input className="input" inputMode="decimal" value={money_.cost} onChange={(e) => setMoney({ ...money_, cost: e.target.value })} /></Field>
-          <Field label="Value estimate ($)"><input className="input" inputMode="decimal" value={money_.estimate} onChange={(e) => setMoney({ ...money_, estimate: e.target.value })} /></Field>
-          <Field label="Ask price ($)"><input className="input" inputMode="decimal" value={money_.list} onChange={(e) => setMoney({ ...money_, list: e.target.value })} /></Field>
+          <Field label="Price — last eBay comp ($)"><input className="input" inputMode="decimal" value={money_.comp} onChange={(e) => setMoney({ ...money_, comp: e.target.value })} /></Field>
+          <Field label="Est. price ($)"><input className="input" inputMode="decimal" value={money_.estimate} onChange={(e) => setMoney({ ...money_, estimate: e.target.value })} /></Field>
+          <Field label="eBay list price ($)"><input className="input" inputMode="decimal" value={money_.list} onChange={(e) => setMoney({ ...money_, list: e.target.value })} /></Field>
           <Field label="Price source link" wide><input className="input" value={card.price_source_url ?? ""} onChange={(e) => set("price_source_url", nullIfBlank(e.target.value))} /></Field>
         </Section>
 
