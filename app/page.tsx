@@ -67,7 +67,7 @@ export default function InventoryPage() {
     }
     const list = [...groups.values()];
     const cmp: Record<SortKey, (a: Card[], b: Card[]) => number> = {
-      estimate: (a, b) => (b[0].estimate_cents ?? -1) - (a[0].estimate_cents ?? -1),
+      estimate: (a, b) => (worth(b[0]) ?? -1) - (worth(a[0]) ?? -1),
       player: (a, b) => a[0].player_names.localeCompare(b[0].player_names),
       number: (a, b) => a[0].card_number.localeCompare(b[0].card_number, undefined, { numeric: true }),
       newest: (a, b) => b[0].created_at.localeCompare(a[0].created_at),
@@ -76,7 +76,7 @@ export default function InventoryPage() {
   }, [filtered, group, sort]);
 
   const totals = useMemo(() => {
-    const est = filtered.reduce((s, c) => s + (c.estimate_cents ?? 0), 0);
+    const est = filtered.reduce((s, c) => s + (worth(c) ?? 0), 0);
     return { count: filtered.length, est };
   }, [filtered]);
 
@@ -140,7 +140,7 @@ export default function InventoryPage() {
         <div>
           <label className="label">Sort</label>
           <select className="input" value={sort} onChange={(e) => setSort(e.target.value as SortKey)}>
-            <option value="estimate">Value (high → low)</option>
+            <option value="estimate">Price (high → low)</option>
             <option value="player">Player</option>
             <option value="number">Card #</option>
             <option value="newest">Newest</option>
@@ -155,7 +155,7 @@ export default function InventoryPage() {
 
       <div className="flex flex-wrap items-center gap-3 text-sm">
         <span className="text-zinc-500">
-          <b className="text-zinc-900">{totals.count}</b> cards · est. value <b className="text-zinc-900">{money(totals.est)}</b>
+          <b className="text-zinc-900">{totals.count}</b> cards · worth <b className="text-zinc-900">{money(totals.est)}</b>
         </span>
         <div className="ml-auto flex flex-wrap gap-2">
           {selected.size > 0 && (
@@ -180,8 +180,8 @@ export default function InventoryPage() {
               <th className="p-2">Variant</th>
               <th className="p-2 text-right">Qty</th>
               <th className="p-2">Status</th>
-              <th className="p-2 text-right">Value</th>
-              <th className="p-2 text-right">Ask</th>
+              <th className="p-2 text-right">Price</th>
+              <th className="p-2 text-right">Est. price</th>
               <th className="p-2">eBay</th>
             </tr>
           </thead>
@@ -208,8 +208,8 @@ export default function InventoryPage() {
                   </td>
                   <td className="p-2 text-right tabular-nums">{g.length > 1 ? `×${g.length}` : ""}</td>
                   <td className="p-2"><span className={`rounded px-1.5 py-0.5 text-xs ${STATUS_STYLE[c.status]}`}>{STATUS_LABEL[c.status]}</span></td>
-                  <td className="p-2 text-right tabular-nums">{money(c.estimate_cents)}</td>
-                  <td className="p-2 text-right tabular-nums">{money(c.list_price_cents)}</td>
+                  <td className="p-2 text-right tabular-nums">{money(c.comp_cents)}</td>
+                  <td className="p-2 text-right tabular-nums text-zinc-500">{money(c.estimate_cents)}</td>
                   <td className="p-2">{c.ebay_epid ? <span className="rounded bg-emerald-50 px-1.5 py-0.5 text-xs text-emerald-700" title={c.ebay_catalog_title ?? ""}>catalog ✓</span> : <span className="text-xs text-zinc-400">—</span>}</td>
                 </tr>
               );
@@ -220,4 +220,9 @@ export default function InventoryPage() {
       </div>
     </div>
   );
+}
+
+/** What a card is worth: the last eBay comp, else the estimate. */
+function worth(c: Card): number | null {
+  return c.comp_cents ?? c.estimate_cents;
 }

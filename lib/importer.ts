@@ -20,6 +20,7 @@ export type FieldKey =
   | "grading_candidate"
   | "grader"
   | "grade"
+  | "comp"
   | "list_price"
   | "estimate"
   | "cost"
@@ -51,8 +52,9 @@ export const FIELDS: { key: FieldKey; label: string; synonyms: string[] }[] = [
   { key: "grading_candidate", label: "Grade it? (yes / maybe / no)", synonyms: ["grading?", "grading", "grade it"] },
   { key: "grader", label: "Grader (PSA, BGS…)", synonyms: ["grader", "grading company"] },
   { key: "grade", label: "Grade", synonyms: ["grade"] },
-  { key: "list_price", label: "List / ask price", synonyms: ["price", "list price", "ask"] },
-  { key: "estimate", label: "Value estimate", synonyms: ["price estimate", "estimate", "value", "market value"] },
+  { key: "comp", label: "Price (last eBay comp)", synonyms: ["price", "comp", "last comp", "ebay comp", "market price"] },
+  { key: "estimate", label: "Est. price", synonyms: ["price estimate", "estimated price", "estimate", "value", "market value"] },
+  { key: "list_price", label: "eBay list price (ask)", synonyms: ["list price", "ask", "listed at", "ebay price"] },
   { key: "cost", label: "Cost", synonyms: ["cost", "paid", "purchase price"] },
   { key: "price_source_url", label: "Price source link", synonyms: ["scp link", "link", "url", "sportscardspro"] },
   { key: "ebay_reference_ids", label: "eBay listings seen (comps)", synonyms: ["ebay auction id", "ebay ids", "ebay item id"] },
@@ -201,6 +203,7 @@ export type CardDraft = {
   grade: string | null;
   grading_candidate: "yes" | "maybe" | "no" | null;
   cost_cents: number | null;
+  comp_cents: number | null;
   estimate_cents: number | null;
   list_price_cents: number | null;
   status: "in_stock" | "listed" | "sold" | "personal";
@@ -260,6 +263,7 @@ export function transformRow(
     grade: text(get("grade")),
     grading_candidate: parseGradingCandidate(get("grading_candidate")),
     cost_cents: parseCents(get("cost")),
+    comp_cents: parseCents(get("comp")),
     estimate_cents: parseCents(get("estimate")),
     list_price_cents: parseCents(get("list_price")),
     status: parseStatus(get("status")) ?? defaults.status,

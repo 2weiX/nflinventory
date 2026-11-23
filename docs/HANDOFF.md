@@ -2,6 +2,19 @@
 
 Newest entry first. Every agent adds one entry at the end of its turn (format in `AGENTS.md`).
 
+## 2026-11-23 · Claude (with Dennis) · Deploy + "Price" (last eBay comp) field
+Status: Done
+Branch / PR: story/comp-price (merged to main)
+What changed:
+- App is live at https://nflinventory-weld.vercel.app. Added NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY in Vercel (all environments). Supabase Site URL + redirect set to the Vercel domain. Dennis created his account; public sign-ups are now OFF.
+- New column `cards.comp_cents` (migration 0002, applied) = **Price**, the last researched eBay comp. `estimate_cents` = **Est. price** (used when there's no comp). `list_price_cents` = eBay list price (ask), no longer shown in the inventory list.
+- Importer: a sheet column "PRICE" now maps to Price (comp), not list price. "list price"/"ask" still map to list price.
+- Inventory list shows Price and Est. price; sorting and the total use Price, falling back to Est. price.
+- Data fix (Dennis asked): the Midnight import had put PRICE into list price; moved those 35 values to comp_cents. 50 cards, every one has Price or Est. price.
+Evidence (tests, build, manual checks): npm test 9/9, typecheck clean, next build ok, SQL count check after the move.
+Open issues / next step: S7 MCP endpoint is still the top story. S8 (value refresh) should write comp_cents.
+Anything Dennis must do (keys, settings, decisions): Supabase org shows "Exceeding usage limits" (likely another project); check before it restricts this one.
+
 ## 2026-11-23 · Claude (with Dennis) · eBay keyset compliance
 Status: Done (account setting), follow-up added to S11
 Branch / PR: main (docs only)

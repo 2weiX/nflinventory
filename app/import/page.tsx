@@ -234,7 +234,7 @@ export default function ImportPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="text-left text-xs text-zinc-500">
-                  <tr><th className="p-1.5">Set</th><th className="p-1.5">#</th><th className="p-1.5">Player</th><th className="p-1.5">Variant</th><th className="p-1.5">Status</th><th className="p-1.5 text-right">Value</th><th className="p-1.5 text-right">Ask</th><th className="p-1.5">eBay</th><th className="p-1.5">Note</th></tr>
+                  <tr><th className="p-1.5">Set</th><th className="p-1.5">#</th><th className="p-1.5">Player</th><th className="p-1.5">Variant</th><th className="p-1.5">Status</th><th className="p-1.5 text-right">Price</th><th className="p-1.5 text-right">Est. price</th><th className="p-1.5">eBay</th><th className="p-1.5">Note</th></tr>
                 </thead>
                 <tbody>
                   {good.slice(0, 25).map((r, i) => (
@@ -244,8 +244,8 @@ export default function ImportPage() {
                       <td className="p-1.5">{r.card.player_names}</td>
                       <td className="p-1.5">{variantLabel(r.card)}</td>
                       <td className="p-1.5">{STATUS_LABEL[r.card.status]}</td>
+                      <td className="p-1.5 text-right tabular-nums">{money(r.card.comp_cents)}</td>
                       <td className="p-1.5 text-right tabular-nums">{money(r.card.estimate_cents)}</td>
-                      <td className="p-1.5 text-right tabular-nums">{money(r.card.list_price_cents)}</td>
                       <td className="p-1.5">{r.card.ebay_epid ? "✓" : ""}</td>
                       <td className="p-1.5 text-xs text-amber-700">{r.warnings.join(", ")}</td>
                     </tr>
