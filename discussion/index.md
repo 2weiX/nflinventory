@@ -11,7 +11,7 @@ does not exist in public sources - that is a result, not a to-do.
 | [C002 Import undo cascades into sales](claims/C002-import-undo-cascades-into-sales/claim.md) | open | - | unknown | 1 |
 | [C003 Import ignores a failed sale insert](claims/C003-import-ignores-a-failed-sale-insert/claim.md) | open | - | unknown | 1 |
 | [C004 Duplicate grouping merges differing cards; group row shows g[0]](claims/C004-duplicate-grouping-merges-differing-card/claim.md) | open | - | unknown | 1 |
-| [C005 Cold-start build fails opaque without env vars](claims/C005-cold-start-build-fails-opaque-without-en/claim.md) | open | - | unknown | 0 |
+| [C005 Cold-start build fails opaque without env vars](claims/C005-cold-start-build-fails-opaque-without-en/claim.md) | open | - | unknown | 1 |
 | [C006 Inventory loads and filters client-side; scale limit unmeasured](claims/C006-inventory-loads-and-filters-client-side-/claim.md) | open | - | unknown | 0 |
 | [C007 Deployment URL not recorded; DoD item 6 cannot run](claims/C007-deployment-url-not-recorded-dod-item-6-c/claim.md) | open | - | unknown | 0 |
 
