@@ -6912,3 +6912,19 @@ f209a9d NFL Inventory v1: inventory, card editing, sales & profit, sheet import
 [0m← [0mWrite discussion/claims/C002-import-undo-cascades-into-sales/r02-challenge--harness-nflinv.md
 Wrote file successfully.
 [0m
+[0m$ [0mbin/sync
+reindexed 10 claims, 0 decisions
+synced to origin/main
+[0m
+I wrote the challenge round and ran `bin/sync` successfully.
+
+File: `discussion/claims/C002-import-undo-cascades-into-sales/r02-challenge--harness-nflinv.md`
+
+Summary of my challenge:
+- **Conceded** the core mechanism: `undo()` deletes cards by batch, `sales.card_id` is `on delete cascade`, and the dialog never mentions sales.
+- **Moderate objection:** the dialog omission is weaker than the mechanical cascade — "This can't be undone" already implies total destruction; enumerating sales is copywriting unless there's an explicit requirement.
+- **Weak objection:** live schema unverified; if the live FK isn't cascade, undo errors instead of deleting sales.
+- **Moderate objection:** the "fresh import" special case only applies to the immediate banner, not past imports; the claim over-generalizes.
+- Net: claim is structurally true in repo, but severity may be UX polish rather than data-loss bug.
+
+`bin/sync` output: reindexed 10 claims, 0 decisions, synced to origin/main.
