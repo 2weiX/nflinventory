@@ -2,6 +2,14 @@
 
 Newest entry first. Every agent adds one entry at the end of its turn (format in `AGENTS.md`).
 
+## 2026-11-23 · Claude (with Dennis) · eBay keyset compliance
+Status: Done (account setting), follow-up added to S11
+Branch / PR: main (docs only)
+What changed: eBay Production keyset `nflinventory` was "Non Compliant". Dennis enabled the Marketplace Account Deletion **exemption** (reason: "I do not persist eBay data"); the keyset now shows as compliant. Added an S11 acceptance criterion: build the account-deletion endpoint and switch off the exemption before the app stores any eBay data.
+Evidence: eBay developer portal, Alerts & Notifications (production) no longer shows "Non Compliant"; "Get OAuth Application Token" is now offered.
+Open issues / next step: S11 still needs the eBay user sign-in setup (RuName with accept/decline URLs on the Vercel domain) and the keys in Vercel env vars.
+Anything Dennis must do: deploy to Vercel so the RuName and the account-deletion endpoint have a real address.
+
 ## 2026-11-21 · Claude (setup session) · v1 baseline
 Status: Done (S1–S5, S6 CSV part)
 Branch / PR: main @ initial commit

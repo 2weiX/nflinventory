@@ -261,6 +261,7 @@ not a code change.
 - [ ] It never publishes. Draft only. A `listings` row is saved with the eBay id; the card status stays unchanged until Dennis publishes.
 - [ ] Rate limits get retries with backoff. eBay errors are shown in plain words.
 - [ ] Exposed as an MCP tool `create_ebay_draft` once S7 exists.
+- [ ] **Account-deletion endpoint before any eBay data is stored.** The production keyset currently runs on an *exemption* ("I do not persist eBay data", set 2026-11-23), which is only true while the app stores nothing from eBay. Before S11 stores a token, listing id or buyer detail: build `/api/ebay/account-deletion` (GET: answer `challenge_code` with hex SHA-256 of challengeCode + verificationToken + endpoint URL as `{"challengeResponse": …}`; POST: verify `x-ebay-signature` via the Notification API public key (cache about 1 h), reply 200/204 immediately, then delete any stored data for that eBay `userId`/username). Then Dennis turns the exemption off and enters the endpoint URL + a 32–80 character `EBAY_VERIFICATION_TOKEN` in the eBay developer portal (Alerts & Notifications → Marketplace Account Deletion). Expect up to ~1,500 notifications a day; if the endpoint stays down 24 h eBay emails, and after 30 days the keyset becomes non-compliant.
 - Reference: `YosefHayim/ebay-mcp` (MIT) for the OAuth and token-refresh patterns.
 
 ## S12 · Match cards to the eBay catalog ⏳
