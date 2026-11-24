@@ -13,6 +13,14 @@ Evidence: in a clean clone of the branch (so the stray .vscode in the working di
 Open issues / next step: open a PR; before merging, check the undo count on a real batch with sales (expect >0 refusal) and on a batch without (expect 0). Untracked .vscode/.idea/.bashrc etc. in the working dir are not from this change.
 Anything Dennis must do: nothing.
 
+## 2026-11-24 · Claude (with Dennis) · Stories and claims as issues on the board
+Status: Done
+Branch / PR: docs/board-issues
+What changed: Dennis wants one surface that he, Claude sessions and the harness can all read and edit. Every story (S1–S17 → issues #8–#24, label `story`) and claim (C001–C010 → #25–#34, label `claim`) is now an issue carrying the full story/claim text and a link to its source. Done stories (S1–S5) and settled claims (C002, C003, C006, C007, C010) are closed. Board 5: the bare draft cards are gone; open issues sit in Next (S7), Building (S11, S12) or Triaged; closed ones plus the triaged requests #3–#6 are in Done. AGENTS.md "The project board" rewritten: who syncs issue ↔ STORIES.md, who moves and closes what.
+Evidence (tests, build, manual checks): board checked in the browser; 17 open + 14 closed items, columns as listed.
+Open issues / next step: Kind, Priority, Points still empty on the board (harness). STORIES.md "Feature-request intake" section should mention the story/claim issues (operator's file; not edited here).
+Anything Dennis must do (keys, settings, decisions): none.
+
 ## 2026-11-24 · Claude (with Dennis) · Project board for visibility
 Status: Done
 Branch / PR: docs/project-board

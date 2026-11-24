@@ -51,13 +51,21 @@ https://github.com/users/2weiX/projects/5 (private, owner 2weiX). Keep it true; 
   Points (number), Source (football MCP / eBay API / Both).
 - Issues and pull requests on 2weiX/nflinventory are added automatically and land in Inbox; closing one moves it
   to Done.
-- Every story (S1…) and every claim (C001…) has one card, titled `S7 · …` or `C009 claim · …`. Stories and claims
-  are draft cards; keep the card's title and column in step with docs/STORIES.md and discussion/claims.
-- Who moves what: the harness operator moves issues out of Inbox at triage and adds a card for every new story or
-  claim. A story agent moves its story to **Building** when it starts and to **Done** when it ships. The discussion
-  loop's operator moves a claim to **Done** once it is settled.
-- Tooling: `gh project item-list 5 --owner 2weiX`, `gh project item-edit`, `gh project item-create` (needs a token
-  with the `project` scope; cloud Claude sessions cannot reach the Projects API, so the harness does this).
+- Every story and every claim is a **GitHub issue** on the board, labelled `story` or `claim`, titled `S7 · …` or
+  `C009 claim · …` (stories #8–#24, claims #25–#34, created 2026-11-24). Its body mirrors the story section in
+  docs/STORIES.md or the claim's claim.md, with a link back. Dennis, Claude sessions and the harness all read and edit
+  them (`gh issue view/edit/comment`, or the REST API: it is repository-scoped, so cloud sessions can use it too).
+- docs/STORIES.md and discussion/claims stay the binding text for agents. When an issue body or comment changes
+  scope, the harness operator folds it into STORIES.md (or files it as a claim round) at triage and notes that on the
+  issue. When STORIES.md or a claim changes, whoever changed it updates the issue body in the same turn.
+- Done stories and settled claims are **closed** issues (closing moves the card to Done). A new story or claim gets
+  its issue at the same time it is written, so the board never misses one.
+- Who moves what: the harness operator moves issues out of Inbox at triage. A story agent moves its story to
+  **Building** when it starts, comments progress on the issue, links its PR (`Part of #14` / `Closes #14`) and closes
+  the issue when the story ships. The discussion loop's operator closes a claim's issue once it is settled.
+- Tooling: issue text and state via `gh issue …` or REST (works everywhere). Board columns and fields via
+  `gh project item-list 5 --owner 2weiX` / `gh project item-edit` (needs a token with the `project` scope; cloud
+  Claude sessions cannot reach the Projects API, so column moves other than close→Done happen on the harness).
 
 ## End of every turn
 Add an entry at the **top** of `docs/HANDOFF.md`:
