@@ -92,3 +92,7 @@ I wrote the round 3 verdict for C002 as **upheld**. It's in `discussion/claims/C
 I set `claim.md` to settled, verdict upheld, round 3. I rated confidence high on the code evidence alone. You may want to drop it to medium, since the live schema is unconfirmed.
 
 **Proposed fix for a story agent or Dennis:** count the affected sales and listings in the dialog, or block undo when sales exist. Also check the card-delete error before deleting the batch row.
+[11:29] round 2/7  role=adjudicator  via bin/claude-round.sh
+NOTE  9 claims in flight, budget allows 6. Finish open claims before proposing more.
+
+TASK  C003-import-ignores-a-failed-sale-insert   role=adjudicator  round=3

@@ -1,10 +1,10 @@
 ---
 id: C003
 title: Import ignores a failed sale insert
-status: open
-verdict: open
-round: 0
-confidence: unknown
+status: settled
+verdict: upheld
+round: 3
+confidence: medium
 falsifier: A sold card may exist without its sale record if the sale insert fails after the card insert; falsified by a transaction wrap or explicit failure surfacing.
 decides: []
 opened: 2026-11-22
