@@ -2203,3 +2203,7 @@ Files are in `discussion/claims/C006-inventory-loads-and-filters-client-side-/`:
 - `claim.md` (frontmatter updated)
 
 Dennis needs to supply the current `cards` row count, the expected ceiling and the load-time budget.
+[11:37] round 3/4  role=adjudicator  via bin/claude-round.sh
+NOTE  7 claims in flight, budget allows 6. Finish open claims before proposing more.
+
+TASK  C008-s12-variant-to-ebay-mapping-epid-lookup-   role=adjudicator  round=3
