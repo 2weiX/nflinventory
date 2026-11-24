@@ -2190,3 +2190,16 @@ I wrote the round-3 verdict for C005 as **weakened**, with confidence medium. Th
 NOTE  7 claims in flight, budget allows 6. Finish open claims before proposing more.
 
 TASK  C006-inventory-loads-and-filters-client-side-   role=adjudicator  round=3
+I wrote the round-3 verdict for C006 as **open**, with confidence low, and `bin/sync` ran cleanly (10 claims reindexed, pushed to origin/main). The roster shows no independence collision: the three rounds are glm-5.3-flash, kimi-k3.1-pro:free and claude-sonnet-5-5. I didn't touch the live database, so there is still no row count.
+
+- **Upheld:** the design observation. `loadAllCards` pages the whole table and everything is filtered in memory. I re-checked this against the code.
+- **Open:** whether it's a defect. That needs the owner's row count, and the evidence is absent rather than conflicting.
+- **Both sides were wrong about the paging loop being correct.** `loadAllCards` orders only by `created_at`, which defaults to `now()`. Each import chunk inserts up to 500 rows in one statement, so those rows all share the same `created_at`. Ties across a 1,000-row page boundary can drop or duplicate cards. This is plausible but I did not run it. The fix is small: add `id` as a second sort key, which is a story change, not a discussion edit.
+- **Challenger's arithmetic:** I rated the "5 ms for 10,000 rows" figure unsupported. The "2–4 MB for 10,000 rows" figure looks about 2.5–5 times too low uncompressed (roughly 10 MB from ~35 columns), and gzip may bring it back. Of its four objections, OBJ-3 (the falsifier is too loose) and OBJ-4 (CSV export is fine as is) stand, OBJ-1 (it's a single-user app, so probably small) is weak, and OBJ-2 (this is a deliberate v1 simplification) is partly refuted.
+- **Sharper falsifier:** it's a defect if a `count(*)` on `cards` plus a full inventory load exceeds a load-time budget Dennis names (I suggested 3 s).
+
+Files are in `discussion/claims/C006-inventory-loads-and-filters-client-side-/`:
+- `r03-verdict--harness-nflinv.md`
+- `claim.md` (frontmatter updated)
+
+Dennis needs to supply the current `cards` row count, the expected ceiling and the load-time budget.
