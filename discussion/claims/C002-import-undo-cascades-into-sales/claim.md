@@ -1,10 +1,10 @@
 ---
 id: C002
 title: Import undo cascades into sales
-status: open
-verdict: open
-round: 0
-confidence: unknown
+status: settled
+verdict: upheld
+round: 3
+confidence: high
 falsifier: Undo deletes cards by batch and sales reference card_id with on delete cascade; the confirm dialog mentions edited cards but not sales - falsified if undo no longer deletes sales or the dialog warns.
 decides: []
 opened: 2026-11-22
