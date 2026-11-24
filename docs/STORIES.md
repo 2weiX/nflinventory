@@ -277,17 +277,19 @@ not a code change.
 - [ ] For cards without an ePID: search eBay's catalog by year + set + player + card #, then pick the parallel using the name mapping in the Whatnot project (`ebay-catalog-parallel-mapping.md`).
 - [ ] Shows the candidates for confirmation; never assigns one silently.
 
-## S17 · Add-card flow: pick from what the football MCP knows 🔜 P1 (from issues #4 #5 #6)
-*As Dennis, I add a card by picking from the platform's knowledge instead of typing free text that later disagrees with it.*
+## S17 · Quick mass entry: a grid that resolves against the platform 🔜 P1 (from issues #4 #5 #6; reshaped by the owner 2026-11-24)
+*As Dennis, I type "set, card number" and a word about the parallel/insert, row after row like in my Google Sheet, and the app resolves what I meant.*
 
-Dennis hit this live on /cards/new (2026-11-24): a Chrome 2026 card with 7+ refractor variants had
-nowhere to go; the Insert/subset had to be typed although the platform knows it; Set was free text
-although the MCP knows the sets.
+**Owner reshape (2026-11-24):** the MCP-fed dropdown form is ON HOLD - the MCP is too slow for
+keystroke-driven entry and Dennis does not want the platform's whole checklist front-loaded into
+the app. What he wants instead is a **mass-entry grid that emulates his Google Sheet**.
 
-- [ ] **Set = a dropdown** fed by the football MCP's known sets (issue #4). Source decision for the implementer: the app reads the MCP through the Tailscale funnel with the cc token (like S16's ingest reads the app), OR the harness posts a set-list snapshot the app stores - the loop may settle this; a static snapshot is fine to start, the sets change rarely.
-- [ ] **Set + card number prefill the rest** (issue #5): the platform's checklist maps (set, card_no) → player, insert/subset, card flags. Prefill player and subset read-only (editable, but prefilled from truth).
-- [ ] **Parallel = a dropdown of the card's known variants** (issue #6), e.g. Chrome 2026's refractor pyramid, from the same checklist/variant data. The free-text field remains for anything the platform lacks, flagged as unverified on save.
-- [ ] A card saved through the flow carries the platform's card identity (set slug + card_no) so S8's value updates and S9's history match without fuzzy joins.
+- [ ] **Keyboard-first grid**: columns Set, Card number, Parallel/insert hint (free text). Tab/Enter moves like a spreadsheet; multiple rows in one submit.
+- [ ] **Paste support**: paste a block of rows straight from the sheet (TSV/CSV lines) into the grid - the rows land as entries, ready to submit.
+- [ ] **Lazy per-set resolution cache** (the no-front-load rule): when a set is first used, the app's server fetches that ONE set's checklist through the football MCP (Tailscale funnel + cc token) and stores it in a `checklist_cache` table; every later row in that set resolves instantly from the cache. No set is fetched until it is used; nothing else is front-loaded.
+- [ ] **Resolution on submit**: each row matches against the cached checklist - exact (set, card_no, parallel hint) → the card is created with the platform identity (player, subset, parallel, flags); ambiguous (the hint matches several variants, e.g. 7+ refractors) → the row lands in a **review list** where Dennis picks the variant once per group; no match → created as free text, flagged unverified (the #6 free-text escape hatch).
+- [ ] After every submit: a summary line - N cards created, N matched to the platform, N in review, N unverified - and the review list is one click, not a wall.
+- [ ] The cache records which set version it came from (the MCP's checklist date) so a stale cache is visible; a refresh button re-pulls one set.
 
 ## 💤 Later: S13 Whatnot integration (selling side; board pricing is S16) · S14 link cards to the break they came from (from Dennis's break trackers) · S15 photo scanning with a review step
 
