@@ -1846,3 +1846,186 @@ I set the claim's frontmatter to `status: adjudicated`, `verdict: weakened`, `ro
  no longer treated as a claim. Its commit message documents the exact incident: "one wasted round proved it"
  — that wasted round is the one I was dispatched to fill.
 
+2. .gitignore now has `.claude/` (line 12, plus the comment — the earlier grep showed `.claude/` at line
+ 12; the commit added 3 lines to .gitignore).
+
+3. `bin/next` now prints "NOTE 7 claims in flight" (down from 9) and does NOT dispatch to `.claude` anymore — the next task is C005
+ adjudicator round 3.
+
+So: the loop is fixed. The `.claude` directory still exists on disk (gitignored, untracked).
+ The index.md — was it regenerated? The commit only touched .gitignore, bin/next, and the rounds log. reindex runs inside bin/sync
+ on every sync, so index.md was regenerated at the next sync (310228e, bf7b55d). Let me check whether index.md still lists `.claude`.
+ bin/reindex still uses os.listdir without the Cxxx filter! The fix only touched bin/next, NOT bin/reindex. So the index may
+ still list `.claude` as an open claim with 0 rounds. Let me check the current index.md.
+
+If the index still lists it, that's a residual bug: bin/reindex needs the same Cxxx filter.
+ My round file should verify this and document it — that's a genuine research finding that survives
+: the fix was applied to bin/next only; bin/reindex still miscounts.
+
+Let me check the current index.md and whether `.claude` still appears.
+∴ Thought for 6s · Fulfilling the prompt for `discussion/claims/.claude/r01-research--harn…
+────────────────────────────────────────
+
+💻 $ grep -n "claude" discussion/index.md + 7 commands  0.2s
+
+────────────────────────────────────────
+Thinking Process:
+
+1.  **Analyze the current request:** The user wants me to read `AGENTS.md`, perform
+ a specific task, and write the resulting file.
+    *   Task details:
+        *   `role=researcher`, `round=1`.
+        *   Claim: `(untitled)`.
+        *   Status: `open`, `falsifier: (none set - write one)`.
+        *   Goal: Gather evidence for the claim.
+        *   Constraints: Label every figure (date, population, sample size, source
+ link). Flag commercial interest. If evidence is missing, state it plainly and stop
+.
+        *   Output: `discussion/claims/.claude/r01-research--harness-nflinv.md`.
+        *   Pre-requisite: Use the round frontmatter in `AGENTS.md`. Then run `bin
+/sync`.
+
+2.  **Analyze the evidence from the `terminal` output:**
+    *   `grep -n "claude" discussion/index.md`: Line 14 shows an existing entry for
+ C009 that uses "claude.ai" as an MCP connector. This confirms `AGENTS.md` likely
+ defines a `claude`Good news: the index no longer lists `.claude` (line 14 is the C009 claim whose title
+ contains "claude.ai" — not the ghost). Wait — how did the index drop the `.claude` row if bin/reindex still uses os.listdir without the
+ Cxxx filter? Let me check: reindex counts rounds as `len([f for f in os.listdir(d) if re.match
+(r"r\d+-", f)])` — my round file doesn't exist yet. And the status comes from claim.md which doesn
+'t exist → status "open". So the row SHOULD still appear... unless the index was regenerated before... hmm, let me check the index head
+/tail to see the full list and count. Let me look at the index rows again.
+
+Actually — wait. Let me re-run reindex mentally: rows built from os.listdir(CLAIMS
+) = [C001..., C002..., ..., C010..., .claude]. fm = frontmatter(.claude/claim.md) = {} (
+missing). status = "open" → ORDER 0. So the row should appear. But the grep for "claude" in index.md only found
+ line 14 (C009 title). So the `.claude` row is GONE. How?
+
+Hmm — maybe reindex skips it because... let me re-read reindex's row loop:
+
+```
+for name in sorted(os.listdir(CLAIMS)) if os.path.isdir(CLAIMS) else []:
+    d = os.path.join(CLAIMS, name)
+    if not os.path.isdir(d):
+        continue
+```
+
+os.listdir includes `.claude` (it's a dir). os.path.isdir → True. So it should be included. Unless... the `.claude`
+ dir was REMOVED from disk? Let me check. Earlier ls showed discussion/claims/.claude existed at
+ 11:29. Did someone delete it? git status doesn't show it (gitignored). Let me check if
+ it still exists.
+∴ Thought for 5s · Analyze the current request:
+────────────────────────────────────────
+
+💻 $ ls -la discussion/claims/ + 3 commands
+
+────────────────────────────────────────
+The directory `discussion/claims/.claude/` no longer exists. This matches my initial
+ investigation based on the `ls` command and explains why it was missing from the
+ index.
+
+The user wants me to:
+1. Read `AGENTS.md` (I know its content implicitly or by prior steps, but must ensure
+ I meet constraints).
+2. Carry out the task for `CLAIM (untitled)`.
+3. Write the output to `discussion/claims/.claude/r01-research--harness-nflinv.md
+`.
+4. Use the round frontmatter in `AGENTS.md`.
+5. Run `bin/sync` afterwards.
+
+**The `.claude` directory was DELETED from disk at 11:32 (the claims dir mtime is
+ 11:32, and `.claude` is gone). The operator session (1cf0e016, 11:33) or the harness
+ session that made commit 96dbe7e removed the stray directory. 
+
+So now:
+- The stray directory no longer exists.
+- bin/next is fixed (Cxxx filter), .gitignore covers `.claude/`.
+- The index no longer lists `.claude`.
+- bin/next now dispatches C005 adjudicator round 3 next — and the brief I was given (
+TASK .claude) is now stale: the claim I was dispatched to research no longer exists, and its directory
+ has been removed.
+
+But my task stands: "carry out exactly this one task and write the one file it names" — write discussion
+/claims/.claude/r01-research--harness-nflinv.md. The directory was deleted while I worked. If I recreate it and write the
+ file, the file will be gitignored (`.claude/` pattern) and bin/sync will never commit it. The file
+ would exist on disk only. Also — bin/next would no longer list it (Cxxx filter), so
+ the ghost claim is gone from the loop.
+
+What's the right call? The task says write the file. The file's purpose was to research the claim — the claim no
+ longer exists (it never did; it was an artifact, and the artifact has been removed and the
+sync failed, stopping
+ tooling fixed). The honest outcome per the brief: "Where the evidence does not exist, say so plainly and stop looking - an explicit
+ gap is a finding."
+
+Options:
+A. Write the file at the named path (recreating the directory). The file documents
+: the claim does not exist; full forensic timeline; the fix that landed at 11:32:
+52 (96dbe7e) while this round was in flight; the removal of the directory. Then run
+ bin/sync — but the file is gitignored, so sync will commit nothing from it (maybe the log only). The round file will be invisible to the loop forever
+. But it will exist on disk at the named path, fulfilling the letter of the task, and it documents the incident
+ from the researcher's side (the commit message of 96dbe7e already documents it from the operator's side).
+
+B. Refuse to write (the claim doesn't exist; writing a round into a deleted directory recreates the very artifact the operator just cleaned up). Report the finding
+ instead. But the task explicitly says "write the one file it names" — and my instructions say carry out exactly this one
+ task. Hmm. But also "carry out exactly this one task" — the task is to gather evidence for the claim and write the
+ file. The claim is now confirmed to be a phantom that was already resolved by another agent. 
+
+Wait — actually, let me reconsider. The round file has genuine value: it's the researcher-side record of the incident. The commit
+ 96dbe7e says "one wasted round proved it" — that wasted round is mine. If I write the file, the record is
+ complete: operator-side fix commit + researcher-side round. But the file is gitignored → never committed →
+ the record won't persist in the repo. Unless... the file could be written and then... no, I can't commit it
+ (gitignored, and sync adds discussion but .gitignore blocks it).
+
+Hmm — actually, wait. Let me check whether `.claude/` in .gitignore would really exclude `discussion/claims/.
+claude/r01-research--harness-nflinv.md`. Pattern `.claude/` (no leading slash) matches
+ at any depth. Yes, excluded. `git add discussion` would skip it. `git check-ignore` can confirm.
+
+C. Write the file at the named path, run bin/sync (which will commit whatever IS staged — the rounds log,
+ maybe index changes), and report honestly: the file exists on disk at the named path,
+ is gitignored, and will not enter the repo; the claim it names was a phantom already fixed by 96dbe7e; no further rounds can
+ be dispatched to it. This fulfills the task literally and documents the finding. The file remains as a local record for Dennis
+.
+
+I think C is right. The task says "carry out exactly this one task and write the one file it names" —
+ I write the file, run bin/sync, and report. The file documents the truth: the claim never existed; the directory was a Claude Code artifact; the loop
+ bug was fixed at 11:32:52 while this round ran; the directory was deleted; the file
+ itself is gitignored and thus a local record only.
+
+Actually, hold on. Let me reconsider whether writing the file recreates the artifact. The `.
+claude` directory was deleted. If I recreate `discussion/claims/.claude/` to write the file, the directory exists again
+ — but now it's gitignored (added at 11:32:52) and bin/next skips non-Cxxx dirs, so it can
+'t capture the loop anymore. It's harmless. The file lives there. Fine.
+
+But hmm — is it odd to write a round into a directory that the previous agent just deliberately removed? The file
+'s frontmatter `claim: .claude` — the claim no longer exists. My round is effectively a post
+-mortem. I'll write it as such: this round is a post-mortem of a phantom claim, filed at the path the loop dispatched to, which no longer exists as a
+ claim. The falsifier I write: for the finding "the .claude directory was a stray Claude Code
+ artifact, not a claim" — falsified if evidence shows it held a claim.md created by bin/claim. Evidence
+: it never did (git never tracked it; the directory contents were only .cc-writes; the operator's fix commit 96dbe
+7e documents the same diagnosis independently).
+
+Also — the round file should note that bin/sync's gate can never accept a round in this directory (CLAIM_DIR_RE), so this
+ round is a record, not a counted round. And that bin/reindex still lacks the Cxxx filter (bin/
+next:276 has it, bin/reindex:30 doesn't) — a residual inconsistency: reindex would list a phantom claim again if a non-Cxxx dir reappears. That
+'s a genuine, verifiable finding that survives the fix: bin/reindex:30 still uses bare os.listdir. Let me verify that claim precisely: bin/reindex
+ line 30 `for name in sorted(os.listdir(CLAIMS)) if os.path.isdir(CLAIMS) else []:` — no Cxxx filter.
+ Yes. So if another `.claude` dir (or any non-Cxxx dir) appears under discussion/claims/, reindex will list it as an open claim with a
+ dead link again. bin/next won't dispatch to it (fixed), but the index will show a phantom row. That's the remaining gap my
+ round should flag. Good — that's real research value.
+
+Also verify: does bin/backlog or bin/drift have the same issue? bin/drift:93 iterates os.listdir too? Let me check
+ quickly. bin/drift line 93: `fm = frontmatter(os.path.join(d, "claim.md"))` — d from
+ what? Let me check. And bin/backlog:33/52. If they also lack the filter, the same phantom can appear in their output. Worth
+ one quick check to make the round's finding complete. Let me check bin/drift and bin/backlog for the same os.listdir pattern
+.
+∴ Thought for 16s · The directory `discussion/claims/.claude/` no longer exists.
+────────────────────────────────────────
+
+────────────────────────────────────────
+☤ Hermes
+The stray directory was already deleted and bin/next fixed at 11:32 while this round was in flight. Let me check whether the sibling tools have the same gap, then write the round.
+────────────────────────────────────────
+
+💻 $ sed -n '85,100p' bin/drift + 4 commands  0.1s
+
+────────────────────────────────────────
+The previous agent fixed `bin/next` (Cxxx filter) to prevent `discussion/claims/.
