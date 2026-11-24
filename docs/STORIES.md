@@ -272,6 +272,28 @@ not a code change.
 
 ---
 
+## Feature-request intake (the ticketing surface, set 2026-11-24)
+
+**Where to log:** a GitHub issue on `2weiX/nflinventory` — title + a line or two is enough. The
+owner logs from his phone; the Mac cowork logs the same way; the harness agents triage. Issues are
+the only intake — everything else (a Telegram message, a verbal request) gets filed as an issue by
+whoever received it, so the queue has one address.
+
+**How a request slots in (the operator's triage, same day):**
+1. **Feature / design request** → a numbered story entry in this file (S-number), status 🔜, with
+   the issue number cited (`from issue #N`). The story is the spec; the claim loop debates it only
+   if the approach itself is contentious.
+2. **Suspected bug** → `bin/claim "title" "falsifier"` in `discussion/claims/` — the overnight loop
+   researches, challenges, adjudicates; a code change only follows a verdict (the bridge rule). The
+   issue is closed with the verdict link.
+3. **Question / decision needed** → answered in the issue by the operator, closed, and recorded in
+   the claim or story it affected.
+
+**The queue:** `docs/STORIES.md` is always the live development queue (stories with status); the
+claims in `discussion/claims/` are the work-in-argument. An issue is never closed until its content
+lives in one of the two. The `discussion/inbox.md` convention remains the loop's internal drain for
+mid-debate questions — owner requests go through issues so they are never lost inside a round.
+
 ## External references (surveyed 2026-11-20, verified on GitHub)
 
 **License rule: only MIT-licensed code may be copied into this repo. The repo is public and the
