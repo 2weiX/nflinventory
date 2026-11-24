@@ -273,6 +273,11 @@ Then run bin/sync.""")
         d = os.path.join(CLAIMS, name)
         if not os.path.isdir(d):
             continue
+        if not re.match(r"^C\d{3}", name):
+            # claims are Cxxx-slug directories; anything else is tooling debris
+            # (the claude CLI drops a hidden .claude/ marker here) and must never
+            # be mistaken for a claim - 2026-11-24, one wasted round proved it.
+            continue
         fm = frontmatter(os.path.join(d, "claim.md"))
         status = fm.get("status", "open")
         if status in ("settled", "unfillable"):
