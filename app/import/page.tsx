@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { money, variantLabel } from "@/lib/format";
 import { FIELDS, guessMapping, transformRow, type BatchDefaults, type FieldKey, type RowResult } from "@/lib/importer";
+import { saleWarning, summarizeSaleInserts, undoCheck, type SaleInsertOutcome } from "@/lib/importResult";
 import { STATUS_LABEL, type Status } from "@/lib/types";
 
 type Grid = unknown[][];
@@ -41,7 +42,7 @@ export default function ImportPage() {
   const [link, setLink] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [done, setDone] = useState<{ batchId: string; cards: number; sales: number } | null>(null);
+  const [done, setDone] = useState<{ batchId: string; cards: number; sales: number; warning: string | null } | null>(null);
   const [batches, setBatches] = useState<Batch[]>([]);
 
   const loadBatches = () =>
@@ -121,22 +122,32 @@ export default function ImportPage() {
       const { error } = await supabase.from("cards").insert(plain.slice(i, i + 500));
       if (error) { setBusy(false); return setErr(`Stopped after ${i} cards: ${error.message}. Use "Undo" below to remove the partial import.`); }
     }
-    let sales = 0;
+    const outcomes: SaleInsertOutcome[] = [];
     for (const r of good.filter((r) => r.sale)) {
       const { data: c, error } = await supabase.from("cards").insert({ ...r.card, import_batch_id: batch.id }).select("id").single();
       if (error) { setBusy(false); return setErr(error.message); }
       const s = await supabase.from("sales").insert({ card_id: c.id, channel: "other", price_cents: r.sale!.price_cents, ...(r.sale!.sold_at ? { sold_at: r.sale!.sold_at } : {}) });
-      if (!s.error) sales++;
+      outcomes.push({ error: s.error });
     }
+    const summary = summarizeSaleInserts(outcomes);
     setBusy(false);
-    setDone({ batchId: batch.id, cards: good.length, sales });
+    setDone({ batchId: batch.id, cards: good.length, sales: summary.landed, warning: saleWarning(summary) });
     loadBatches();
   }
 
   async function undo(batchId: string) {
-    if (!confirm("Delete every card from this import? Cards you edited since will be deleted too. This can't be undone.")) return;
-    await supabase.from("cards").delete().eq("import_batch_id", batchId);
-    await supabase.from("import_batches").delete().eq("id", batchId);
+    setErr(null);
+    const count = (table: "sales" | "listings") =>
+      supabase.from(table).select("id, cards!inner(import_batch_id)", { count: "exact", head: true }).eq("cards.import_batch_id", batchId);
+    const [sales, listings] = await Promise.all([count("sales"), count("listings")]);
+    if (sales.error || listings.error) return setErr(`Couldn't check this import before undoing it: ${(sales.error ?? listings.error)!.message}`);
+    const check = undoCheck(sales.count ?? 0, listings.count ?? 0);
+    if (!check.ok) return setErr(check.message);
+    if (!confirm(check.confirm)) return;
+    const del = await supabase.from("cards").delete().eq("import_batch_id", batchId);
+    if (del.error) return setErr(`Undo failed, nothing was removed from the import record: ${del.error.message}`);
+    const delBatch = await supabase.from("import_batches").delete().eq("id", batchId);
+    if (delBatch.error) setErr(`Cards were deleted but the import record could not be removed: ${delBatch.error.message}`);
     if (done?.batchId === batchId) setDone(null);
     loadBatches();
   }
@@ -162,6 +173,13 @@ export default function ImportPage() {
       </div>
 
       {err && <p className="rounded-md bg-red-50 p-3 text-sm text-red-700">{err}</p>}
+
+      {done?.warning && (
+        <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-800">
+          {done.warning}{" "}
+          <button className="underline" onClick={() => undo(done.batchId)}>Undo this import</button>
+        </p>
+      )}
 
       {done && (
         <div className="rounded-md bg-emerald-50 p-4 text-sm text-emerald-800">

@@ -2175,3 +2175,14 @@ inv.md. n = len(rounds(d)) + 1 where d = .claude dir — at dispatch time the di
 NOTE  7 claims in flight, budget allows 6. Finish open claims before proposing more.
 
 TASK  C005-cold-start-build-fails-opaque-without-en   role=adjudicator  round=3
+I wrote the round-3 verdict for C005 as **weakened**, with confidence medium. The file is `discussion/claims/C005-cold-start-build-fails-opaque-without-en/r03-verdict--harness-nflinv.md`. I updated `claim.md` to `adjudicated`, `weakened`, `round: 3`, `medium`, and `bin/sync` ran cleanly.
+
+- **Independence:** I'm `claude-sonnet-5-5`. The other rounds are `z-ai/glm-5.3-flash` and `moonshotai/kimi-k3.1-pro:free`, so the rule holds and there was no collision.
+- **Mechanism holds:** `lib/supabase.ts` still throws at import when either Supabase variable is missing. I confirmed that in the source.
+- **"Opaque" is refuted:** the error names both variables and `.env.example`.
+- **The documented paths succeed:** the Vercel setup in the README sets both variables before the first deploy. The local `cp .env.example .env.local` step leaves non-empty placeholders, so the build passes.
+- **Remedy:** the lazy client is the wrong fix. Next bakes `NEXT_PUBLIC_*` values into the client bundle at build time, so a lazy client would just move the failure into the browser. That is my own reasoning and I didn't test it.
+- **Challenger's corrections:** I corrected two points in the challenger's round. "Falsified as written" is too strong, because the mechanism is true. Its reason for rejecting the lazy client was also wrong.
+- **What survives:** one README line saying `npm run build` also needs the two variables from `.env.example`. I proposed it only; I didn't edit the README or `docs/STORIES.md`.
+- **Left open:** the placeholder-key trap, where the build passes but the first real Supabase call would fail. It belongs in a separate claim, not this one.
+- **Not checked:** I didn't re-run r01's build and dev runs, so those figures rest on r01's single observation each. I also couldn't check for a `.github` directory, because the sandbox masks it with a device file.
