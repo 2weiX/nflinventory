@@ -43,6 +43,22 @@ Database changes follow a stricter rule, because a revert doesn't undo them:
 - **Destructive** ones (drop or rename a column or table, change a type, rewrite or delete existing rows) are never
   applied by an agent. Leave the migration file in the PR unmerged and put it under "Anything Dennis must do".
 
+## The project board (what Dennis looks at)
+Dennis follows the work on one board: GitHub Project **nflinventory**,
+https://github.com/users/2weiX/projects/5 (private, owner 2weiX). Keep it true; it is his only overview.
+- Columns (Status): **Inbox** (new, untriaged) → **Triaged** → **Next** → **Building** → **Done**.
+- Fields: Kind (Feature / Bug / Story / Claim), Story (e.g. S7), Priority (P0 / P1 / P2 / Later),
+  Points (number), Source (football MCP / eBay API / Both).
+- Issues and pull requests on 2weiX/nflinventory are added automatically and land in Inbox; closing one moves it
+  to Done.
+- Every story (S1…) and every claim (C001…) has one card, titled `S7 · …` or `C009 claim · …`. Stories and claims
+  are draft cards; keep the card's title and column in step with docs/STORIES.md and discussion/claims.
+- Who moves what: the harness operator moves issues out of Inbox at triage and adds a card for every new story or
+  claim. A story agent moves its story to **Building** when it starts and to **Done** when it ships. The discussion
+  loop's operator moves a claim to **Done** once it is settled.
+- Tooling: `gh project item-list 5 --owner 2weiX`, `gh project item-edit`, `gh project item-create` (needs a token
+  with the `project` scope; cloud Claude sessions cannot reach the Projects API, so the harness does this).
+
 ## End of every turn
 Add an entry at the **top** of `docs/HANDOFF.md`:
 
