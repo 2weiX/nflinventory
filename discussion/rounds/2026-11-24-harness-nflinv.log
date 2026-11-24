@@ -1257,3 +1257,278 @@ Now let me gather the final evidence pieces with precision:
 1. Directory forensics (already have):
    - `discussion/claims/.claude/` exists; mtime 2026-11-24 11:29 CET; contains only `.cc-writes/` (empty
 , drwx------ 700).
+   - Untracked: `git ls-files discussion/claims/.claude` → empty; not in any commit (git log --all -- ... empty).
+   - `git status --porcelain` shows only the modified rounds log — .claude/.cc-writes empty dir → invisible to git (
+no files). Good: git add discussion won't add anything from it until my file lands.
+
+2. Sibling artifacts: `.claude/.cc-writes` exists in /home/dennis/nflinventory/ (Nov 22 04
+:00), discussion/ (mtime?), bin/ (mtime?). Let me get mtimes of those to correlate with Claude Code runs (Nov
+ 22 04:00 = the overnight run that used claude-round? bin/claude-round.sh is the adjud
+icator; the log showed an overnight on 2026-11-22?). Get mtimes.
+
+3. bin/next behavior: source lines — `for name in sorted(os.listdir(CLAIMS))`, `if
+ not os.path.isdir(d): continue`, `fm = frontmatter(...claim.md)` returns {} on missing file → title "(untitled)"
+ via `fm.get('title', '(untitled)')`, falsifier "(none set - write one)", status "open", PRIORITY 0
+, and `.claude` sorts first (ASCII "." = 46 < "C" = 67). So every dispatch cycle picks `.claude` first. Also eff
+ = max(len(rounds), 0) = 0.
+
+4. bin/reindex: same listdir → index.md row with dead link. Index generated 2026-11-24 shows the row.
+
+5. Timeline from rounds log: [11:28] round 1/7 adjudicator via bin/claude-round.sh
+ (C002), [11:29] round 2/7 adjudicator via bin/claude-round.sh (C003), [11:30] round 3/7 researcher via bin/hermes-round.sh (TASK
+ .claude). The `.claude` dir mtime 11:29 falls exactly inside the Claude Code adjudicator window.
+ The adjudicator's own summary at [11:29] says it wrote r03-verdict for C003 and synced.
+
+Hmm — but why would Claude Code create `.claude` in discussion/claims/? Where does overnight cd for adjudicator rounds? Let me check
+ bin/overnight to see. The claude-round.sh has no cd. Maybe overnight runs `cd discussion/claims/
+<claim>` before dispatching? Let me look at overnight to pin the mechanism. Actually the C002/C
+003 dirs have mtime 11:29/11:30 — directories get mtime-bumped when files are created inside them (r03-verdict files). The `.claude` in
+[11:32] round 1/5  role=adjudicator  via bin/claude-round.sh
+NOTE  7 claims in flight, budget allows 6. Finish open claims before proposing more.
+
+TASK  C004-duplicate-grouping-merges-differing-card   role=adjudicator  round=3
+ discussion/claims would be created if Claude Code's cwd was discussion/claims (or a subdir). Let me check bin/overnight for
+ the dispatch cwd.
+
+Also confirm: what is `.cc-writes`? It's Claude Code's write-staging dir (Claude Code creates `.claude/.cc-writes`
+ in cwd for staging file writes? plausibly). I can't verify Claude Code internals from the repo, but I
+ can verify empirically: every dir where a Claude Code session ran has `.claude/.cc-writes`. I know from
+ my own memory that Claude Code runs on this box. I'll state the inference with the empirical correlation and label it as inference, not vendor
+ documentation.
+
+6. Impact figures:
+   - Rounds log: round 3/7 of max_rounds_per_night 8 (budget.yml) consumed on a non-
+claim.
+   - "9 claims in flight" overcounts: 8 real claim dirs (C001-C010 minus settled C002/C00
+3/C007 → let me count: open claims = C001, C004, C005, C006, C008, C009, C010 = 7, plus .cla
+ude = 8. Hmm, the note said 9 claims in flight. Let me recount: in_flight counts dirs with status
+ not settled/unfillable and not blocked_on. C001 open, C002 settled, C003 settled, C004 open, C
+005 open, C006 open, C007 settled, C008 open, C009 open, C010 open, .claude open (no claim.md → status open). That's 7
+ + 1 = 8. But the note said 9. Hmm — at 11:30 the log said "NOTE 9 claims in flight" — maybe C002/C003 were not
+ yet settled at that point (the adjudicator rounds at 11:28/11:29 settled them; the note is
+ computed at dispatch time of round 3/7 which was 11:30, after both were settled...). Hmm
+, or the note counted differently. Actually wait — the note in MY task says "9 claims in flight" and it
+ was generated when I was dispatched. Let me just count now: index says 8 open + 3 settled = 11 rows;
+ 8 open includes .claude. Real open = 7. So "9 claims in flight" vs actual 7 real open claims
+. Hmm, discrepancy. Maybe at dispatch time C002/C003 were still open (settled at 11
+:29... round 2/7 logged at 11:29 said C003 settled; round 3/7 at 11:30 dispatched). Then at 11:30
+: open = C001, C004, C005, C006, C008, C009, C010, .claude = 8. Still not 9. Unless the budget counter in
+_flight also counted something else... whatever — I should not over-claim; I'll count what I
+ can verify now and label the log line as reported. Actually the note may have been computed at an earlier tick. I'll present: index (
+2026-11-24) lists 8 open, of which 1 (.claude) is the artifact → 7 real open claims. The "9 claims in flight" note in the
+ log is unexplained by a recount now; I'll flag it as a minor discrepancy I can't fully explain — hmm, actually
+ let me check: maybe budget counts differently. Not worth deep-diving; I'll state the count I
+ verified and note the log's 9 doesn't reconcile exactly with my recount (7 real + 1 artifact = 8).
+ Honest gap.
+
+   Wait, actually let me recount more carefully from the index: rows: .claude (open), C001 (open), C00
+4 (open), C005 (open), C006 (open), C008 (open), C009 (open), C010 (open), C002 (settled), C003 (settled), C007
+ (settled). Open = 8. Real = 7. So 9 is off by one even including the artifact. Hmm. Unless... at dispatch time
+, C002 AND C003 were both still open: then open = C001, C002, C003, C004, C005, C006, C008, C
+009, C010, .claude = 10. The [04:00] note said 10 — consistent with C002/C003/C007
+... wait at 04:00 C007 was open? C007 settled at 11:30 commit bb5f893 "C007 settled". At 04:00, settled
+ = C002? No — C002/C003/C007 were all settled this morning (11:28-11:30). At 04:00 all three
+ were open → 10 open. ✓. At 11:30 dispatch: C002 and C003 settled by then; C007 settled at 11:30:55 (commit
+ time) — hmm, the [11:30] round 3/7 note said 9. So at 11:30, C002+C003 settled, C007 still open
+ → 9 open. ✓ Then C007 settled at 11:30:55, so now 8 open (7 real + .claude). The "9 claims in flight" in MY
+ task brief was generated when I was dispatched — hmm, that was after 11:30:55? If I was dispatched at
+ round 3/7 at [11:30], C007 was settled at 11:30:55... The note printed in my brief
+ says 9 — matches dispatch at ≤11:30:55. OK consistent. Good — I can explain: the
+ note's 9 = 8 real open claims + the artifact, at the moment of dispatch (before C007's
+ settle commit landed). I'll state it with the timestamp caveat.
+
+   Actually simpler: state the numbers I verified now: 11 claim dirs, 8 with status open per
+ index (generated 2026-11-24), of which 1 is the artifact; 7 real open claims. And
+ the log note at dispatch (round 3/7, [11:30]) said 9, consistent with C007 not yet settled then. Fine.
+
+7. Falsifier for my finding: "The directory discussion/claims/.claude is a stray artifact of a Claude Code session,
+ not a claim." Falsifier: evidence that the directory was created by bin/claim or holds a legitimate claim.md (title
+, falsifier, id). As of 2026-11-24 it holds none; git has never held one. Also the second-order finding: bin/next counts a directory without claim
+.md as an open claim and dispatches rounds into it; the gate refuses those rounds. F
+alsifier for that: a round file written in .claude that passes bin/gate-independence (it won't — CLAIM_DIR_RE),
+ or bin/next skipping it.
+
+Also the recommendation section: 
+- Remove discussion/claims/.claude (after this round is committed) — owner/operator action; it's an untracked artifact dir, nothing committed.
+- Patch bin/next and bin/reindex to skip directories without claim.md (and hidden dirs) — this
+ is bin/ code; per the two-trees rule a discussion agent doesn't edit app code, but bin
+/ is the loop's own machinery — the safest reading: propose it; the owner or a story agent applies. Note gate-independence already filters (
+CLAIM_DIR_RE) — the fix pattern exists.
+- The adjudicator adapter (bin/claude-round.sh) leaves .claude/.cc-writes artifacts in its cwd; consider running
+ Claude Code with a scratch cwd or adding .claude/.cc-writes to .gitignore, and cleaning after
+ rounds.
+
+Wait — check .gitignore: is .claude ignored? `git status --porcelain` showed only the log file modified; .claude dirs
+ (root, discussion, bin) exist but don't show as untracked → they must be gitignored or contain
+ no files. .claude/.cc-writes is an empty dir → git ignores empty dirs entirely, so it wouldn
+'t show regardless. Let me check .gitignore to be precise. If .claude is not ignored, then
+ once I write my file into discussion/claims/.claude/, git add discussion will stage it — the gate then refuses it → quarantine ren
+ames it. The rejected- file then gets committed. Hmm, so the repo will carry discussion/claims/.claude/rejected-r01-research--harness-nfl
+inv.md. That's... acceptable? It preserves the work. But it also re-commits the stray dir with content. Alternatively, I could keep
+ the artifact out of git by NOT committing my file... but bin/sync adds everything under discussion.
+
+Hmm, actually wait. Let me reconsider: maybe I should NOT let sync commit the quarantine mess, but instead: write the file (deliverable ✓), run the
+ gate check manually (documented refusal), then run bin/sync as instructed and let it do its thing. The sync outcome is part of the finding
+. I'll let it run and report honestly. If sync quarantines and commits — fine, the file
+ exists in the repo (renamed), the finding is preserved, and the ghost claim problem
+ is visible in the commit message ("gate: quarantined..."). 
+
+Hmm, but actually — hold on. Is committing a `rejected-` file inside `.claude/` harmful? The dir then holds content, and git tracks
+ it. Future rounds: bin/next still lists `.claude` as open claim with 0 rounds → keeps dispatching researchers →
+ each new r01 gets quarantined again → more rejected- files accumulating (rejected-2-...? No — quarantine dest
+ = "rejected-" + fn, and if exists, rejected-2-...). So each night adds a rejected file
+. Messy accumulation. Still, that's the machinery's behavior; my report will name it. Alternatively
+ I could make the round file NOT look like a round (e.g., name it as the task says — it IS the
+ named file; can't change).
+
+One more alternative: after sync completes, remove the stray directory (including the rejected file) in a follow-up commit
+ via bin/sync "discussion: housekeeping". But then the deliverable file no longer exists in the repo — only in my
+ report. The task said "write the one file it names" — the file must exist at that path. If I delete the
+ dir, the file is gone. Unless I first copy it somewhere durable... but the task says write the file at that path. I think
+ the file should remain. Actually — hmm, what does "carry out exactly this one task" mean for cleanup? "
+A terse 'stop' means hard stop immediately, no cleanup beyond what's asked" — that's about user chats
+. Here, the task is from the overnight loop. I'll do exactly: read AGENTS.md ✓, write the file, run bin/sync. No extra
+ deletion. The round file itself carries the recommendation to remove the directory.
+
+Let me now also check bin/overnight to pin the cwd for the adjudicator dispatch (
+to explain why .claude appeared in discussion/claims/).
+∴ Thought for 70s · Summary of Findings:
+────────────────────────────────────────
+
+────────────────────────────────────────
+☤ Hermes
+The picture is clear: .claude is not a claim. Let me pin down how it got created beforeI write the round.
+────────────────────────────────────────
+
+✗ $ grep -n "cd \|claude-round\|dispatch\|run_role\|subprocess" bin/overnight + 6 commands  0.1s [exit 1]
+
+────────────────────────────────────────
+The directory `/home/dennis/nflinventory/discussion/claims/.claude` was created with
+ an mtime of `2026-11-24 11:29` CET. The corresponding round in the log happened at
+ `11:30`.
+
+I have checked `bin/overnight`.
+1. `bin/overnight` does *not* appear to change directories (`cd`) before calling `
+claude-round.sh`.
+2. However, I noticed that one of the entries: `240 +0100 /home/dennis/nflinventory
+/.claude/.cc-writes`. This shows a successful execution of a process (likely related
+ to Claude Code's operation) that resulted in this artifact.
+
+The strong inference, given that `.cc-writes` is a temporary workspace directory used
+ by the Claude Code adapter (which I know from the system context runs on this box
+), is that when `bin/overnight` called `bin/claude-round.sh` to process the claims
+, the process running inside `discussion/claims/` (likely driven by the workload or
+ a subsequent action within the loop) had its current working directory (CWD) set
+ to `discussion/claims/` before the `claude-round.sh` execution.
+
+The round file at `discussion/claims/.claude/r01-research--harness-nflinv.md` will
+ be:
+
+1.  **Written** as requested, detailing the forensic findings.Interesting! `.gitignore` line: "# Claude CLI working artifacts
+ - never claims, never committed" and `.claude/` — so `.claude/` directories ARE gitignored. That
+'s why git status doesn't show them. So if I write my round file into discussion/claims/.claude/, it
+ will be IGNORED by git! `git add discussion` will not add it (gitignored). Then bin/sync: after staging, `git status
+ --porcelain` — my file is ignored → nothing staged from it → reindex runs, nothing to commit → "nothing to sync"? No wait — the rounds log is modified (un
+tracked→tracked? The log file is modified per git status). The log file discussion/rounds/
+2026-11-24-... is tracked (modified). So sync would commit the log change plus reindex changes
+. Hmm.
+
+So writing the round file into `discussion/claims/.claude/` means:
+- The file exists on disk at the named path (deliverable ✓).
+- git will NOT track it (gitignored `.claude/`).
+- bin/sync will not commit it; the gate won't even see it (staged_changes won't include it).
+- The claim `.claude` remains a ghost: bin/next keeps dispatching researcher rounds to it each
+ night; each researcher writes a file that git ignores and the loop never sees... wait, would bin/overnight
+ even see the round? "A round that produces no file stops the circle before sync" — the file IS
+ produced on disk, but sync finds nothing to commit → "nothing to sync" → exit 0. Does
+ overnight treat that as a successful round? The loop counts rounds by log entries presumably. The ghost claim will be re-dispatched every night forever (it
+'s always first in the sort). Each night burns round budget on it. That's the spin.
+
+Hmm wait, actually — will bin/next even pick `.claude` again after my round? My round file IS
+ on disk matching r\d+-... bin/next rounds(d) counts it → eff=1, roles contains "research" → want = "challenged" → dispatch
+es a CHALLENGER to `.claude`. The challenger writes r02-challenge--kimi-k3-1-pro.md into .claude (also gitignored), then
+ runs bin/sync → nothing to commit → sync succeeds (exit 0, "nothing to sync"). Then bin/next → adjud
+icator... The whole claim lifecycle plays out on a ghost claim, all gitignored, all invisible to the index and the gate. The loop burns its nightly
+ round budget (8) on a claim that doesn't exist. THAT's the damage: the loop's budget is finite (max_rounds
+_per_night: 8), and `.claude` sorts FIRST every night, so it will consume rounds every night before
+ any real claim is touched. Actually wait — does bin/next pick work items in priority
+ order? work.sort() → (PRIORITY, eff, name, ...) → PRIORITY 0 (open), eff 0, name ".claude" sorts first. After my round, eff
+=1. Other open claims with eff 0: C001 (open, verdict weakened — wait, C001 has verdict "weakened" and status open, rounds:
+ r01, r02, r03 (verdict) → eff=3), C004 eff 2, C005 eff 2 (r01, r02-challenge), C006 eff 2, C008 eff
+ 2, C009 eff 2 (r01, r02-challenge-kimi), C010 eff 2. So the queue: `.claude` (eff 1 after my round
+) < C004 (eff 2)? Sort by (priority, eff, name): all open priority 0; eff: .claude=1 (after my round),
+ C004=2, C005=2, C006=2, C008=2, C009=2, C010=2, C001=3. So `.claude` is STILL FIRST → challenger dispatched to the ghost. Each night: challenger → adjud
+icator → settle → boundary → cycle closes → then researcher again?? The settle round for
+ a claim with no verdict... `.claude` has no verdict; after challenge+adjudication, `want
+ = "settle"` → adjudicator writes a settle round → cycle closes → eff grows → then researcher again... It will cycle through roles
+ forever, all gitignored, invisible. Every night, the first rounds of the budget go to the
+ ghost claim.
+
+Hold on — but wait: if the round files are gitignored, bin/sync's gate never sees them, so no quarantine. But bin
+/sync commits the rounds LOG file (modified). The log would show ghost rounds. And reindex still lists `.
+claude` as an open claim (index.md regenerated each sync, committed). So the repo shows: an
+ open claim `.claude` with 0 rounds forever, plus rounds log entries about it. The ghost persists indefinitely.
+
+Hmm, but actually — would the challenger/adjudicator rounds even be dispatched? bin/next requires
+ the roster's challenger model (kimi) not already on the claim — fine. So yes.
+
+So the honest finding: the artifact directory has already captured the loop. My round, written where the
+ brief says, lands in a gitignored directory — the file exists for the human but the loop can never count it. I should verify
+ this empirically: after writing, run `git check-ignore` and `git status --porcelain` to
+ confirm.
+
+Wait, actually, hmm: `.claude/` pattern in .gitignore — does it match `discussion/claims/.cla
+ude/`? The pattern `.claude/` (no leading slash) matches at any depth. Yes.
+
+Now the deeper question: what's the best deliverable? The brief says write the file and run bin/sync. I'll do
+ exactly that. The file will exist at the named path. bin/sync will run (committing the log + reindex changes
+, if any). And my round will document:
+
+1. The claim does not exist — explicit gap.
+2. Forensics of the artifact directory.
+3. The loop mechanics that make it a permanent ghost (bin/next sorts hidden dirs first, treats missing
+ claim.md as open claim; .gitignore hides round files; sync commits nothing from it; the loop re-dispatches forever).
+4. Falsifier for the finding.
+5. Recommendations (owner actions): remove the directory; fix bin/next + bin/reindex to skip dirs without claim.md /
+ hidden dirs; the .gitignore comment "never claims, never committed" shows the author
+ already knew `.claude/` is not a claim — bin/next and reindex contradict it.
+
+Wait — actually that's a nice piece of evidence: `.gitignore` explicitly says "Claude CLI working artifacts - never claims, never committed". So
+ the repo's own config states `.claude/` is never a claim. bin/next and bin/reindex violate that by treating the directory as a claim. That's the cris
+pest statement of the bug.
+
+One more check: does bin/next skip gitignored dirs? No — os.listdir doesn't know gitignore. Confirmed by the dispatch itself.
+
+Also: should I check when `discussion/claims/.claude` was created vs the C002/C00
+3 adjudicator rounds? mtime 11:29:01 (dir creation/mtime). The rounds log: [11:28] round 1/7 adjudicator C002,
+ [11:29] round 2/7 adjudicator C003. The Claude Code session for C002/C003 ran `cd "$(dirname "$0")/.."`? No —
+ claude-round.sh does NOT cd; overnight does `cd "$(dirname "$0")/.."` at line 6 — overnight runs from
+ repo root. So how did `.claude` get created in discussion/claims/? Hmm. Maybe Claude Code was invoked with cwd=repo root but... no,
+ it creates `.claude` in its cwd. Repo root has `.claude` (mtime 11:32:59 — hmm, that's AFTER the 11:30
+ dispatch, i.e., MY session? No — I'm hermes, not Claude Code. 11:32:59 is when... hmm
+, my session started around 11:30ish. I haven't run Claude Code. Who bumped /home/dennis/nflinventory/.claude at 11
+:32:59? Maybe the hermes harness itself runs Claude Code somewhere? Or the `claude` binary check
+? Actually — .cc-writes mtime 11:32:59 too. Something ran Claude Code at 11:32:59 in the repo root. Not me...
+ unless hermes-round.sh... no, hermes-round.sh execs hermes chat. Hmm — maybe the harness's own tooling. I can't fully explain 11:32:59. I
+'ll note what I can: the discussion/claims/.claude dir (11:29:01) coincides with the Claude Code adjudicator rounds at 11:28-11:29
+; the root .claude was touched at 11:32:59, cause not verified.
+
+Wait, actually — maybe I should check for Claude Code session logs to pin which session created discussion/claims/.claude. ~/.claude/projects/... contains
+ session transcripts per cwd. The transcripts dir name is the cwd path with slashes → dashes. If
+ a Claude Code session ran with cwd /home/dennis/nflinventory/discussion/claims (or the harness passes
+ cwd=discussion/claims/<claim>), there'd be a project dir. Let me check ~/.claude/projects/ for project
+ dirs matching nflinventory paths and their session files' timestamps. That would pin the cause
+ with real evidence.
+
+Actually, claude-round.sh pipes stdin and execs claude with no --cwd... Claude Code uses the cwd of the process. bin/overnight
+ cds to repo root. Hmm, but then .claude would be at repo root only. Unless... the C
+002/C003 adjudicator rounds were run manually by the operator (not via overnight) from a different cwd?
+ The log says "via bin/claude-round.sh". The [11:28] and [11:29] entries. Also mtime of discussion/claims/.claude =
+ 11:29:01 — the C003 round was logged at [11:29]. And C002's verdict file was committed at
+ 11:29:21 (d3b5537). So the C002 Claude Code session ran ~11:28-11:29:21. For `.claude` to
+ appear in discussion/claims/, the Claude Code process cwd must have been discussion/claims (or a subdir). Hmm — OR the
+ operator ran a Claude Code session manually with cwd=discussion/claims. The log lines say
+ "via bin/claude-round.sh" — but bin/claude-round.sh is just a wrapper; whoever invokes it determines cwd. If overnight invokes
+ it from repo root, cwd = repo root. So maybe the operator (Dennis or an interactive session) invoked the adjudicator rounds manually
+ with cwd=discussion/claims. Can't determine from the log alone.
+

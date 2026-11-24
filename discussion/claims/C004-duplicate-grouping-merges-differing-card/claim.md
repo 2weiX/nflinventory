@@ -1,10 +1,10 @@
 ---
 id: C004
 title: Duplicate grouping merges differing cards; group row shows g[0]
-status: open
-verdict: open
-round: 0
-confidence: unknown
+status: weakened
+verdict: weakened
+round: 3
+confidence: medium
 falsifier: Groups may contain cards differing in money fields not covered by the grouping key; the row shows g[0] while totals use all members - needs a concrete divergent pair to file.
 decides: []
 opened: 2026-11-22

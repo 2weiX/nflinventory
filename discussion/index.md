@@ -7,9 +7,7 @@ does not exist in public sources - that is a result, not a to-do.
 
 | Claim | Status | Verdict | Conf. | Rounds |
 |---|---|---|---|---|
-| [.claude .claude](claims/.claude/claim.md) | open | - | - | 0 |
 | [C001 First circle: survey the nflinventory app and file a claim backlog](claims/C001-first-circle-survey-the-nflinventory-app/claim.md) | open | weakened | medium | 3 |
-| [C004 Duplicate grouping merges differing cards; group row shows g[0]](claims/C004-duplicate-grouping-merges-differing-card/claim.md) | open | - | unknown | 2 |
 | [C005 Cold-start build fails opaque without env vars](claims/C005-cold-start-build-fails-opaque-without-en/claim.md) | open | - | unknown | 2 |
 | [C006 Inventory loads and filters client-side; scale limit unmeasured](claims/C006-inventory-loads-and-filters-client-side-/claim.md) | open | - | unknown | 2 |
 | [C008 S12 variant-to-eBay mapping: ePID lookup with checklist-keyword fallback](claims/C008-s12-variant-to-ebay-mapping-epid-lookup-/claim.md) | open | - | unknown | 2 |
@@ -18,8 +16,9 @@ does not exist in public sources - that is a result, not a to-do.
 | [C002 Import undo cascades into sales](claims/C002-import-undo-cascades-into-sales/claim.md) | settled | upheld | high | 3 |
 | [C003 Import ignores a failed sale insert](claims/C003-import-ignores-a-failed-sale-insert/claim.md) | settled | upheld | medium | 3 |
 | [C007 Deployment URL not recorded; DoD item 6 cannot run](claims/C007-deployment-url-not-recorded-dod-item-6-c/claim.md) | settled | settled | unknown | 2 |
+| [C004 Duplicate grouping merges differing cards; group row shows g[0]](claims/C004-duplicate-grouping-merges-differing-card/claim.md) | weakened | weakened | medium | 3 |
 
 ## Where the argument stands
 
-- **8** open
+- **6** open
 - **3** settled
