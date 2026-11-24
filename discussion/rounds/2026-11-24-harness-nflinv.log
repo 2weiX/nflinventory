@@ -96,3 +96,20 @@ I set `claim.md` to settled, verdict upheld, round 3. I rated confidence high on
 NOTE  9 claims in flight, budget allows 6. Finish open claims before proposing more.
 
 TASK  C003-import-ignores-a-failed-sale-insert   role=adjudicator  round=3
+I upheld C003 and wrote the verdict to `discussion/claims/C003-import-ignores-a-failed-sale-insert/r03-verdict--harness-nflinv.md`. I set `claim.md` to settled, upheld, round 3, confidence medium. `bin/sync` ran clean and pushed to origin/main.
+
+The model check passed. Earlier rounds were glm-5.3-flash and kimi-k3.1-pro:free, and I'm claude-sonnet-5-5, so no round was refused.
+
+**Verdict:** The import inserts a sold card first, then the sale as a separate call, and drops the sale's error. There is no transaction wrap or failure surfacing.
+
+**Challenger's points, recomputed:**
+- **Count mismatch as a signal (O1):** Refuted, and the gap is worse than both rounds said. When every sale insert fails, the banner drops the "and M sales" text, so it looks like an import with no sales at all.
+- **Rare failures (O2):** Mostly right. The sale payload is valid by construction, so failures would be transient. Nobody has measured how often.
+- **Editor path out of scope (O4):** Accepted. It needs its own claim.
+- **Cheapest fix (O5):** Accepted as the recommended remedy.
+
+**Still open:** The live-data count of sold cards without a sale row has not been measured. A query is in the verdict for a story agent or Dennis to run. A non-zero count would not prove a failed insert, since manual edits can also leave a sold card without a sale.
+
+**Proposed story change:** The verdict recommends a visible warning in the importer when sale inserts fail, shown even when no sale succeeded. It also names an optional card-plus-sale transaction function as the stronger fix. I did not edit `docs/STORIES.md`.
+
+I did not fill in the "Why it matters" section or `decides:` in `claim.md`. I only changed the status frontmatter, so the claim is still unattached to a story.
