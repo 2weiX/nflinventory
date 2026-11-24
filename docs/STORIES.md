@@ -37,7 +37,8 @@ He works at a desk for bulk jobs and on his phone at shows. He also works throug
 | S6 | Export and back up | P1 | ✅ v1 (CSV); JSON backup 🔜 |
 | S7 | Claude can work with my inventory (MCP) | P0 | 🔜 |
 | S8 | Claude refreshes values with my football MCP | P1 | 🔜 (needs S7) |
-| S9 | Value history per card | P1 | 🔜 |
+| S9 | Value history per card (+ the price-research screen, from issue #3) | P1 | 🔜 |
+| S17 | Add-card flow: pick from what the football MCP knows | P1 | 🔜 (from issues #4 #5 #6) |
 | S10 | Works well on my phone at a show | P1 | 🔜 |
 | S16 | Whatnot board prices from the harness (desktop) | P2 | 🔜 |
 | S11 | Create an eBay draft in one click | P0 | 🔨 production keys live (2026-11-22, verified); user-token flow needs a registered redirect URL; sold-comps API is a separate growth check |
@@ -157,7 +158,15 @@ He works at a desk for bulk jobs and on his phone at shows. He also works throug
   Refractor) — the source string in the value history records the exact query, so a value is traceable.
 - The MCP is SELECT-only: it can price but never mutate anything. All writes happen through this app's own MCP.
 
-## S9 · Value history per card 🔜 P1
+## S9 · Value history per card 🔜 P1 (now also the price-research screen, from issue #3)
+
+**Issue #3 (Dennis, reviewing the mockups):** from a card, see what it is worth and where. The
+history below is the core; the price-research screen is the same data with a wider window - per
+card: the value history, and (per the C010 owner decision, 2026-11-24) the football MCP stays the
+primary price while a separate section shows eBay comps for the same card: the last-3 asking
+prices via the Browse API (open with the production keys), upgraded to the last-3 SOLD comps
+(Marketplace Insights) if and when the growth-check access lands. On-demand per card view and
+cached, never a bulk crawl.
 *As Dennis, I see how a card's value moved and where each number came from.*
 
 - [ ] New table `card_values` (card_id, value_cents, source, observed_at, user_id) with row-level security, plus a numbered migration in `supabase/migrations/`.
@@ -267,6 +276,18 @@ not a code change.
 ## S12 · Match cards to the eBay catalog ⏳
 - [ ] For cards without an ePID: search eBay's catalog by year + set + player + card #, then pick the parallel using the name mapping in the Whatnot project (`ebay-catalog-parallel-mapping.md`).
 - [ ] Shows the candidates for confirmation; never assigns one silently.
+
+## S17 · Add-card flow: pick from what the football MCP knows 🔜 P1 (from issues #4 #5 #6)
+*As Dennis, I add a card by picking from the platform's knowledge instead of typing free text that later disagrees with it.*
+
+Dennis hit this live on /cards/new (2026-11-24): a Chrome 2026 card with 7+ refractor variants had
+nowhere to go; the Insert/subset had to be typed although the platform knows it; Set was free text
+although the MCP knows the sets.
+
+- [ ] **Set = a dropdown** fed by the football MCP's known sets (issue #4). Source decision for the implementer: the app reads the MCP through the Tailscale funnel with the cc token (like S16's ingest reads the app), OR the harness posts a set-list snapshot the app stores - the loop may settle this; a static snapshot is fine to start, the sets change rarely.
+- [ ] **Set + card number prefill the rest** (issue #5): the platform's checklist maps (set, card_no) → player, insert/subset, card flags. Prefill player and subset read-only (editable, but prefilled from truth).
+- [ ] **Parallel = a dropdown of the card's known variants** (issue #6), e.g. Chrome 2026's refractor pyramid, from the same checklist/variant data. The free-text field remains for anything the platform lacks, flagged as unverified on save.
+- [ ] A card saved through the flow carries the platform's card identity (set slug + card_no) so S8's value updates and S9's history match without fuzzy joins.
 
 ## 💤 Later: S13 Whatnot integration (selling side; board pricing is S16) · S14 link cards to the break they came from (from Dennis's break trackers) · S15 photo scanning with a review step
 
