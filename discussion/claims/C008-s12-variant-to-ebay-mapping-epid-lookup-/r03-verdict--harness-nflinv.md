@@ -91,7 +91,7 @@ The mechanism is real and documented. The claim as worded is not safe to build f
 - Clause 1 is **unresolved** and cannot be tested before S11 ships a user token.
 - Clause 2 is testable via `getProduct` but has no defined pass criterion.
 
-Confidence: **medium-low**. The two strongest findings (user-token requirement, missing coverage data) rest on
+Confidence: **medium** (lower end). The two strongest findings (user-token requirement, missing coverage data) rest on
 eBay pages I did not re-fetch.
 
 ## Recommended filing for the next circle

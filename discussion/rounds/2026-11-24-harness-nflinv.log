@@ -2207,3 +2207,21 @@ Dennis needs to supply the current `cards` row count, the expected ceiling and t
 NOTE  7 claims in flight, budget allows 6. Finish open claims before proposing more.
 
 TASK  C008-s12-variant-to-ebay-mapping-epid-lookup-   role=adjudicator  round=3
+I wrote the round-3 verdict for C008 and updated `claim.md`, but `bin/sync` failed to push, so the round isn't published yet.
+
+The verdict is **weakened**, with medium confidence. `claim.md` now says `status: adjudicated`, `verdict: weakened`, `round: 3`, `confidence: medium`. The verdict file is `discussion/claims/C008-s12-variant-to-ebay-mapping-epid-lookup-/r03-verdict--harness-nflinv.md`.
+
+**Independence:** I'm claude-sonnet-5-5. Rounds 1 and 2 were glm-5.3-flash and kimi-k3.1-pro:free, so no collision. The challenge came from a different model than the researcher, so it carried full weight.
+
+**Verdict reasoning:**
+- **The mechanism is real, but the claim's wording isn't safe to build from.**
+- **Arithmetic checks out.** 43,770 + 25,091 = 68,861 searches, which is at least 7 days at 10,000 calls a day. Both sides used the checklist as the population, but S12 maps inventory cards that have no ePID, and that count is unknown.
+- **Catalog search needs a user token.** I carried this from the first-round research and did not re-fetch eBay's pages. The existing client-credentials token can't run it. S11's user-token flow is a prerequisite, so S12 is sequenced after S11 rather than impossible.
+- **The fallback is ambiguous.** S11 already lists with item specifics when there's no ePID, which is not a keyword search.
+- **The challenger misread the second falsifier clause.** It is a `getProduct` check, not a human rejecting a bad candidate.
+- **Both sides were partly wrong.** The repo's own `docs/EBAY_SANDBOX.md` note about client credentials for catalog reads is stale.
+- **One thing stays open.** Whether production Catalog search accepts S11's `sell.inventory` user token can only be settled by a live call after S11.
+
+**Sync failed:** `bin/sync` reindexed locally (11 claims) but failed all three push attempts on `fatal: couldn't find remote ref story/C002-C003-import-data-loss`. I did not force-push. Run `bin/sync` again once that remote ref issue clears.
+
+The tree also shows untracked home-directory dotfiles (`.bashrc`, `.gitconfig` and so on) that I didn't touch.
