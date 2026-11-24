@@ -13,6 +13,14 @@ Evidence: in a clean clone of the branch (so the stray .vscode in the working di
 Open issues / next step: open a PR; before merging, check the undo count on a real batch with sales (expect >0 refusal) and on a batch without (expect 0). Untracked .vscode/.idea/.bashrc etc. in the working dir are not from this change.
 Anything Dennis must do: nothing.
 
+## 2026-11-24 · Claude (with Dennis) · Project board for visibility
+Status: Done
+Branch / PR: docs/project-board
+What changed: Created GitHub Project "nflinventory" (https://github.com/users/2weiX/projects/5): columns Inbox → Triaged → Next → Building → Done; fields Kind, Story, Priority, Points, Source; auto-add of repo issues and PRs. Added one draft card per story (S1–S17) and claim (C001–C010) in its current column. AGENTS.md now has "The project board" section: who moves which card.
+Evidence (tests, build, manual checks): board checked in the browser: 26 cards, statuses match STORIES.md and claim frontmatter as of today.
+Open issues / next step: Kind, Priority and Points are still empty on the cards; the harness operator should fill them at the next triage. Keep cards in step with stories and claims.
+Anything Dennis must do (keys, settings, decisions): none.
+
 ## 2026-11-23 · Claude (with Dennis) · Agents ship their own work
 Status: Done
 Branch / PR: story/merge-policy
