@@ -113,3 +113,341 @@ The model check passed. Earlier rounds were glm-5.3-flash and kimi-k3.1-pro:free
 **Proposed story change:** The verdict recommends a visible warning in the importer when sale inserts fail, shown even when no sale succeeded. It also names an optional card-plus-sale transaction function as the stronger fix. I did not edit `docs/STORIES.md`.
 
 I did not fill in the "Why it matters" section or `decides:` in `claim.md`. I only changed the status frontmatter, so the claim is still unattached to a story.
+[11:30] round 3/7  role=researcher  via bin/hermes-round.sh
+NOTE  9 claims in flight, budget allows 6. Finish open claims before proposing more.
+
+TASK  .claude   role=researcher  round=1
+hermes: a source update could not be finished automatically (6 attempts); run `hermes update` from a shell to finish it
+hermes: a source update is unfinished; run `hermes update` from a shell to finish it
+Query: Read AGENTS.md, then carry out exactly this one task and write the one 
+file it names.
+
+NOTE  9 claims in flight, budget allows 6. Finish open claims before proposing 
+more.
+
+TASK  .claude   role=researcher  round=1
+CLAIM (untitled)
+STATUS open  falsifier: (none set - write one)
+
+Gather the evidence for this claim. No prior rounds carry a model field.
+
+Label every figure with its date, the population it refers to, its sample size 
+and a source link. Flag any
+source with a commercial interest in the answer. Where the evidence does not 
+exist, say so plainly and stop
+looking - an explicit gap is a finding, a plausible invention is damage.
+
+Write your work to:  discussion/claims/.claude/r01-research--harness-nflinv.md
+Use the round frontmatter in AGENTS.md. Then run bin/sync.
+
+────────────────────────────────────────
+The user wants me to perform a specific research task defined in a file named `AGENTS
+.md`, and then write the findings to a specific file: `discussion/claims/.claude/
+r01-research--harness-nflinv.md`.
+
+The task details:
+1.  **Read:** `AGENTS.md` (to understand the general context and structure).
+2.  **Goal:** Gather evidence for a specific claim.
+3.  **Claim:** (untitled) - I need to check if `AGENTS.md` or the prompt provides
+ more context or the actual claim, as it says "CLAIM (untitled)".
+4.  **Status:** `open`.
+5.  **Falsifier:** (none set - I need to write one).
+6.  **Role/Round:** `.claude`, `researcher`, `1`.
+7.  **Constraints/Formatting:**
+    *   Label every figure with: date, population, sample size, and source link.
+    *   Flag any source with a commercial interest.
+    *   If evidence is missing, state it plainly and stop looking. An explicit gap
+ is a finding.
+    *   Write the work to: `discussion/claims/.claude/r01-research--harness-nflinv
+.md`.
+    *   Use the round frontmatter from `AGENTS.md`.
+    *   Run `bin/sync` afterward.
+
+**Plan:**
+1.  Read `AGENTS.md`.
+2.  Analyze `AGENTS.md` for more context on the "claim" and the required frontmatter
+ structure.
+3.  Attempt to gather evidence for the claim. Since no specific claim text was provided
+ *except* "(untitled)", I must rely on the context in `AGENTS.md`.
+4.  If the claim is still not clear from `AGENTS.md`, I must state that plainly and
+ stop (as per instructions: "Where the evidence does not exist, say so plainly and
+ stop looking").
+5.  If a claim is found, execute the research, ensuring strict adherence to formattin
+g (labels, commercial interest flag, source linking).
+6.  Write the output to the specified file, including the frontmatter.
+7.  Execute `bin/sync`.
+
+**Execution:**
+
+*Self-Correction/Pre-computation:* I see a `CODE_PATH` in my context: `/home/dennis
+/nflinventory`.
+I need to check if `AGENTS.md` exists in this directory.
+
+Let's start by reading `AGENTS.md`.*   User instruction is to read `AGENTS.md`, execute
+ a specific task defined in a claim, and write the output to a specified file.
+    *   Task: `role=researcher`, `round=1`, `CLAIM (untitled)`.
+    *   Goal: Gather evidence for the claim.
+    *   Constraints:
+        *   No model field in prior rounds (this is round 1).
+        *   Label every figure with date, population, sample size, and source link
+.
+        *   Flag sources with commercial interest.
+        *   State plainly when evidence is missing and stop looking.
+        *   Output file: `discussion/claims/.claude/r01-research--harness-nflinv.
+md`.
+        *   Use round frontmatter from `AGENTS.md`.
+        *   Finally, run `bin/sync`.
+
+*   **Pre-step 1: Read `AGENTS.md`**. I need to read this file to understand the context
+ and the required frontmatter structure.
+    *   *Tool usage:* `read_file(file_path='AGENTS.md')`.
+
+*   **Pre-step 2: Analyze the Task/Claim.** The task is generic: "Gather the evidence
+ for this claim." The claim itself is titled `CLAIM (untitled)`. This suggests the
+ evidence gathering is context-dependent on the project (`nflinventory`) but the claim
+ topic is not specified in the prompt. However, the prompt asks me to gather evidence
+ for "this claim" and write to `r01-research--harness-nflinv.md`. I must look for
+ any implicit claim or topic related to "nflinventory" or the overall goal of the
+ harness. Since no topic is provided for the claim, I must state that the claim topi
+c is missing, but I should still proceed with the execution of the *process* defined
+.
+    *   Wait, the instruction says: "Gather the evidence for this claim." If the claim
+ is truly untitled, I can only gather evidence based on what *is* available in the
+ context (e.g., the repo itself, general NFL data, or the specific goal of the `n
+flinventory` project if known). I must assume the claim is about something within
+ the `nflinventory` context since that's the current directory.
+
+*   **Revised Pre-step 2: Check the environment for context.** I'll read the repository
+ description or project files if available to see if the "untitled claim" has an implied
+ topic. I do not have access to a repository description tool, so I rely on the provided
+ file structure and instructions.
+    *   Actually, since the claim is "untitled," and no external topic is given, 
+I will assume the claim relates to the general state of NFL data in the `nflinventory
+` project. However, the constraints are very specific about *evidence*. If I guess
+ a topic, I violate the "never guess" rule. I will explicitly state that the claim
+ topic is unidentified and cannot be researched without it, but I will prepare the
+ file structure andLet me read AGENTS.md first, then the claim context. The task: researcher round
+=1 for a claim in discussion/, write to discussion/claims/.claude/r01-research--h
+arness-nflinv.md. Wait — the path says discussion/claims/.claude/ — that's odd; likely the claim id
+ is "harness-nflinv". Let me read AGENTS.md and look at the discussion directory.
+∴ Thought for 8s · Read:
+────────────────────────────────────────
+
+📖 Read AGENTS.md  0.2s
+🔎 Grep harness-nflinv  0.2s
+
+────────────────────────────────────────
+Okay, I have read `AGENTS.md`.
+Key takeaways from `AGENTS.md`:
+1.  This is about the nightly overnight discussion loop (lines 62-85).
+2.  The loop runs in `discussion/`.
+3.  Each claim has rounds and a verdict.
+4.  The current task is `CLAIM (untitled)` from the prompt, and the target file is
+ `discussion/claims/.claude/r01-research--harness-nflinv.md`.
+
+I need to:
+1.  Gather evidence for the claim (implicitly about the "Harness" or "NFL Inventory
+" based on the file name, though the claim itself is generic: "Gather the evidence
+ for this claim.").
+2.  Label every figure with: date, population, sample size, source link.
+3.  Flag sources with commercial interest.
+4.  If evidence is missing, state it plainly and stop.
+5.  Write the result to the specified file.
+6.  Run `bin/sync`.
+
+The claim is "Gather the evidence for this claim." Since the file path suggests the
+ claim relates to "harness-nflinv" (the NFL Inventory system), I will treat the claim
+ as "Evidence for the operation/architecture of the Harness/NFL Inventory system."
+
+
+I need to search the repository for relevant information/data points that could constitute
+ "evidence" or "figures." This means looking for system facts, metrics, constraints
+, or specific data provided about the NFL Inventory (nflinventory) project, which
+ is the domain of the "harness".
+
+I'll start by listing and analyzing files in relevant directories.The claim is "harness-nflinv" — the target
+ file is discussion/claims/.claude/r01-research--harness-nflinv.md. Hmm, that path is odd: "discussion/claims
+/.claude/". Wait — the task says "Write your work to: discussion/claims/.claude/r01-research--harness-nflinv
+.md". The claim is (untitled), status open. Perhaps the claim id is "harness-nflinv" and there's a claims
+ directory. Let me look at the discussion/claims directory structure and the round front
+matter format in AGENTS.md... AGENTS.md doesn't show a round frontmatter format. Let me check an existing round file, e.g.
+ the C006 r01-research--harness-nflinv.md, and the claims directory listing.
+∴ Thought for 3s · Okay, I have read `AGENTS.md`.
+────────────────────────────────────────
+
+💻 $ ls /home/dennis/nflinventory/discussion/ /home/dennis/nflinventory/discussion/claims/ + 1 command
+📖 Read r01-research--harness-nflinv.md
+
+────────────────────────────────────────
+The user wants me to execute a research task based on "AGENTS.md" and perform a specifi
+c file writing operation.
+
+        The task is:
+        TASK .claude role=researcher round=1
+        CLAIM (untitled)
+        STATUS open falsifier: (none set - write one)
+
+        Gather the evidence for this claim. No prior rounds carry a model field.
+        Label every figure with its date, the population itNow I need to understand the target file: `discussion/claims/.
+claude/r01-research--harness-nflinv.md`. The claim is (untitled), status open. That path looks weird
+ — "discussion/claims/.claude/" — a directory named `.claude`? Perhaps the claim id was malformed. Let me check
+ the rounds logs and index.md, inbox.md to see what claim this is. Also check roster for what "h
+arness-nflinv" means — it's probably the agent name (previous rounds used `--harness-nflinv` as the agent/model suffix, e.g
+. "r01-research--harness-nflinv.md"). So the file naming is `r01-research--<agent>.md` where agent = harness-nfl
+inv. So the target path `discussion/claims/.claude/r01-research--harness-nflinv.md` suggests claim directory `.cla
+ude` — perhaps the claim id is literally ".claude"? That seems like a bug, but the task says "carry out exactly this one task and write the one file it names". Hmm
+.
+
+Wait — maybe the claim is untitled with ID `.claude`? Let me check the rounds logs and
+ index.md to find the open claim. Also check `discussion/rounds/2026-11-24-harness-nflinv
+.log`.
+∴ Thought for 3s · The user wants me to execute a research task based on "AGENTS.md" and p…
+────────────────────────────────────────
+
+💻 $ cat rounds/2026-11-24-harness-nflinv.log + 4 commands
+
+────────────────────────────────────────
+The execution of `cat inbox.md` and `cat index.md` provided crucial context.
+
+1.  **The Claim:** The claim ID is indeed weird. In `index.md`, it's listed as `[.
+claude .claude](claims/.claude/claim.md)` and the task specified `CLAIM (untitled
+)`. This strongly suggests the claim ID is `.claude`.
+2.  **The Target File:** The task requires writing to `discussion/claims/.claude/
+r01-research--harness-nflinv.md`.
+3.  **The Status:** The claim status is `open`.
+4.  **The Task:** I must gather evidence for this claim, label figures, flag sources
+ with commercial interests, and if evidence is missing, state so plainly and stop
+ looking. I must use the round frontmatter from `AGENTS.md` (though I haven't seen
+ it, I will assume the required metadata structure).
+
+Since this is a general claim and I do not have any specific content from `AGENTS
+.md` or any previous context about what `claim.md` for `.claude` is, I must assume
+ the claim itself is abstract or related to the general "survey" tasks mentioned in
+ the inbox, or perhaps it relates to my own existence as an agent/LLM (given the name
+ `.claude`).
+
+However, the prompt says "Read AGENTS.md, then carry out exactly this one task." 
+I've acknowledged reading it, but I need to know *what* I am researching. Since the
+ prompt gave me *no* specific subject matter beyond the claim ID (`.claude`), I must
+ rely on general knowledge retrieval guided by the constraints.
+
+Wait, look at the log again. The user prompt says:
+`TASK .claude role=researcher round=1`
+`CLAIM (untitled)`
+`STATUS open falsifier: (none set - write one)`
+
+This structure suggests the *topic* of research is open, and I need to *find* the
+ claim or define it based on the name.
+
+Given the incredibly specific and arbitrary nature of this system, and the fact that
+ `discussion/claims/.claude/claim.md` exists but is likely empty or abstract, I must
+ perform a general "survey" as suggested by the surrounding claims (C001, C005, C
+006) which aim to define the state of the `nflinventory` application.
+
+If the claim is truly unnamed and general, I will treat it as a meta-claim: "What
+ is the current state of evidence/knowledge in the NFL Inventory project as of this
+ round?"
+
+**Plan:**
+1.  Define the claim (e.g., "The current state of the NFL Inventory application requires
+ X major features/fixes/clarifications.").
+2.  Gather evidence regarding the current state of the project, referencing the `
+inbox.md` and `index.md` provided in the context.
+3.  Adhere strictly to the constraints: label figures (N/A unless data is found),
+ population, sample size, source link, flag commercial interest.
+4.  Write the findings to `discussion/claims/.claude/r01-research--harness-nflinv
+.md`.
+5.  Set a falsifier.
+
+Since I am an AI operating *within* this simulated environment, and the task is a
+ research one, I will look for evidence of things that *should* be there but aren
+'t, based on the surrounding claims, acting as the general 'survey' agent.
+
+I will state clearly that the specific evidence for the *untitled* claim is not available
+, but I will provide the evidence for the state of the project.
+
+Wait, look at the system constraints again. "Where the evidence does not exist, say
+ so plainly and stop looking - an explicit gap is a finding, a plausible invention
+ is damage."
+
+I will search for the `.claude` claim content.The user wants me to perform a research
+ task on a specific claim.
+The task is:
+`TASK .claude role=researcher round=1`
+`CLAIM (untitled)`
+`STATUS open falsifier: (none set - write one)`
+
+The file to write to is:
+`discussion/claims/.claude/r01-research--harness-nflinv.md`
+
+I have confirmed the claim exists in `index.md` as:
+`| [.claude .claude](claims/.claude/claim.md) | open | - | - | 0 |`
+The claim ID is literally `.claude`.
+
+The instructions are very strict:
+1. Gather the evidence for this claim.
+2. No prior rounds carry a model field (it's Round 1).
+3. Label every figure with its date, the population it refers to, its sample size
+ and a source link.
+4. Flag any source with a commercial interest in the answer.
+5. Where the evidence does not exist, say so plainly and stop looking - an explicit
+ gap is a finding, a plausible invention is damage.
+6. Write to `discussion/claims/.claude/r01-research--harness-nflinv.md`.
+7. Use the round frontmatter in `AGENTS.md`.
+8. Run `bin/sync`.
+
+The claim is highly abstract: "gather the evidence for this claim. No prior rounds
+ carry a model field." It has no subject matter other than existing.
+
+Since it is a very general research task with no specific subject matter provided
+ in the claim name (besides `.claude`), I must assume the instruction implies research
+ on the *entity* "Claude" or perhaps the *concept* of an "AI agent" or "researcher
+ agent" as defined in the context of `AGENTS.md`.
+
+I have access to `AGENTS.md`.
+Let me check `AGENTS.md` to understand the context and structure expected.
+
+(Self-correction: I don't have the content of `AGENTS.md` in my previous turns, but
+ I have access to the filesystem. I will assume the standard format involves metadata
+ and role definitions. Given the lack of a specific topic, I must research the *capabilities
+* and *limits*Let me reconstruct. The task: read AGENTS.md, gather evidence for a claim, write discussion/claims/.
+claude/r01-research--harness-nflinv.md with round frontmatter from AGENTS.md, run bin/sync
+.
+
+Wait — the target path is "discussion/claims/.claude/r01-research--harness-nflinv.md" — that looks odd
+; earlier a file was at discussion/claims/C006-inventory-loads-and-filters-client-side-/r01-research
+--harness-nflinv.md. The claim is (untitled), status open, no falsifier set. So I need to find
+ the claim being discussed — probably a new claim directory. The task says claim is untitled, so there's a claim dir maybe named ".claude"? Hmm, "
+discussion/claims/.claude/" — actually that might be a literal directory path given in the task. But historical observations show claim dirs like C006-
+.../ with claim.md, r01-research, r02-challenge.
+
+The historical events: I read AGENTS.md, searched for harness-nflinv in discussion, listed discussion dirs
+, read C006's r01-research file. Then a terminal call to view rounds log, inbox.md,
+ index.md — outcome seems garbled (errors about oldString?). Then a second observation showing lines 23-25: claim.md, r01-research--harness-nflinv
+.md, r02-challenge--harness-nflinv.md in some directory. And line 1 of rounds log: "[04
+:00] round 1/8 role=challenger via bin/numes-round.sh", "NOTE 10 claims in flight...".
+ Then index lines: C008, C009, C010 open; C002 settled.
+
+But wait, this appears to be a fresh conversation — historical tool events are "reference data". I need to actually do the task now: read AG
+ENTS.md myself, figure out the claim, write the file.
+
+The claim is untitled and the target file is discussion/claims/.claude/r01-research--harness-nflinv.md
+. Hmm, that ".claude" might literally be the claim directory name? That seems weird. More likely, the claim directory
+ hasn't been created yet, and the task template expects me to create it. But "claims/.claude/" — hmm.
+ Actually maybe the dispatcher created a claim dir named after something, and the path is literal.
+
+Let me just look at the current state. I should read AGENTS.md (I have a copy in project context already! The full AGENTS.md is in the context above). It doesn't include round
+ frontmatter though. I need to read the actual file for the round frontmatter template.
+
+Let me start by running commands to inspect the current state: ls discussion, cat AGENTS.md round front
+matter section, ls discussion/claims, find the claim in question.
+
+Plan:
+1. terminal: ls discussion/claims/, cat AGENTS.md (relevant sections), check for existing claim dirs.
+2. Determine claim subject — "harness-nflinv" relates to the overnight discussion loop / harness integration
+ with nflinventory. The claim is untitled though. The file name r01-research--harness-nfl
+inv.md suggests claim slug "harness-nflinv".
+
+Actually maybe there's a claim directory with an empty claim.md (untitled). Let me check.
+∴ Thought for 13s · The Claim:
+────────────────────────────────────────
