@@ -1532,3 +1532,128 @@ Actually, claude-round.sh pipes stdin and execs claude with no --cwd... Claude C
  it from repo root, cwd = repo root. So maybe the operator (Dennis or an interactive session) invoked the adjudicator rounds manually
  with cwd=discussion/claims. Can't determine from the log alone.
 
+Let me check ~/.claude/projects/ for sessions to pin the cwd.
+∴ Thought for 24s · Written
+────────────────────────────────────────
+
+────────────────────────────────────────
+☤ Hermes
+One more evidence check, then I write the round: pin which ClaudeCode session created the stray directory.
+────────────────────────────────────────
+
+💻 $ ls /home/dennis/.claude/projects/ 2>/dev/null | grep -i nfl + 5 commands  0.1s
+
+────────────────────────────────────────
+The `ls` output for `/home/dennis/.claude/projects/` shows a large project folder
+:
+`/home-dennis-nflinventory`.
+
+Inside this folder, I have session files:
+1. `2026-11-24 11:29` (379KB) - This matches the time the discussion/claims/.claude
+ directory was created.
+2. `2026-11-24 11:33` (422KB) - This is shortly after my round (started around 11
+:30).
+3. `2026-11-22 04:00` (487KB) - Previous session.
+4. `2026-11-24 11:30` (470KB)Session transcripts:
+- 06a89794 (11:29, 379KB) — likely the C002 adjudicator round (logged [11:28], committed 11:29
+:21).
+- f6b97ac8 (11:30, 470KB) — likely the C003 adjudicator round (logged [11:29], committed 11:30:08).
+- 1cf0e016 (11:33, 422KB) — the 11:32:59 root .claude touch. A Claude Code session at 11:33 in the repo root
+ — cause unverified. Maybe Dennis ran something manually, or the operator role.
+- e1df22b7 (2026-11-22 04:00) — the Nov 22 overnight adjudicator.
+
+All sessions have cwd=/home/dennis/nflinventory (project dir name). So the sessions ran from repo root.
+ Then why did `.claude` appear in discussion/claims/? Because Claude Code sessions can `cd` via Bash — if a session ran `cd discussion/claims/
+...` or created files with a tool whose cwd changed... Actually `.cc-writes` is created by Claude Code in the cwd at the time of
+ a file write? If the session wrote the r03-verdict file into discussion/claims/C003...
+/ and its internal cwd for writes... Hmm. Or the session ran a Bash `cd` then wrote. The .cc-writes dir in discussion/claims/ has
+ mtime 11:29:01 — exactly when the C002 verdict session (06a89794, 11:29) was finishing
+.
+
+I can check the transcript for "cd discussion/claims" to pin it. Let me grep the 06a89794 transcript for '.cc-writes'
+ or 'cd discussion/claims'. Quick grep.
+∴ Thought for 5s · The `ls` output for `/home/dennis/.claude/projects/` shows a large proj…
+────────────────────────────────────────
+
+💻 $ grep -o 'cd discussion/claims[^"\\]*' 06a89794-436c-46ca-bf8f-c9592b60479c.jsonl + 4 commands  0.2s
+
+────────────────────────────────────────
+The transcript search confirms the session 06a89794 (11:29) had a cwd change to `/
+home/dennis/nflinventory/discussion`. This explains the file path structure.
+
+Now, execute the task.
+Task:
+1. Read `AGENTS.md`.
+2. Check the note: 9 claims in flight, budget allows 6. Finish open claims before
+ proposing more.
+3. Carry out exactly one task.
+4. Write one file named `discussion/claims/.claude/r01-research--harness-nflinv.md
+`.
+5. Task details: `role=researcher`, `round=1`, `CLAIM (untitled)`, `STATUS open`,
+ `falsifier: (none set - write one)`.
+6. Gather evidence for this claim.
+7. Constraint: No prior rounds.
+8. Formatting: Label every figure with its date, population, sample size, and source
+ link. Flag sources with commercial interest. State explicitly when evidence is missin
+g and stop looking.
+9. Final step: `bin/sync`.
+
+I need to look into `discussion/claims/` or the whole repo if it's related to "NFL
+Inventory". `AGENTS.md` is the context for my operation but not the claim itself.
+ The claim is "untitled" and the file name suggests "harness-nflinv".
+
+I will start by assuming the claim relates to the NFLThe 06a89794 transcript (11:29)
+ contains cwd "/home/dennis/nflinventory/discussion" and 2 hits of "cc-writes". So the C002 adjudicator session
+ changed cwd to discussion/ at some point (probably via a Bash `cd discussion/...` or the Write
+ tool's cwd resolution), creating discussion/.claude/.cc-writes (mtime 11:29:01). And discussion/claims/.claude (mtime
+ 11:29:01) — likely the session's cwd went to discussion/claims at some point too? Let me check for cwd
+ "/home/dennis/nflinventory/discussion/claims" in the transcripts. Also which session created discussion/claims/.claude — check
+ f6b97ac8 (11:30) as well.
+∴ Thought for 3s · The transcript search confirms the session 06a89794 (11:29) had a cwd c…
+────────────────────────────────────────
+
+💻 $ for f in 06a89794-436c-46ca-bf8f-c9592b60479c.jsonl f6b97ac8-1e2d-4b73-990f-4d4cc86d7fba.jsonl 1cf0e016-6ff1-4e1f-89a0-e98617df18f7.jsonl + 3 commands  0.1s
+
+────────────────────────────────────────
+The execution of the task requires several steps:
+1.  **Read `AGENTS.md`**: I need to locate and read this file.
+2.  **Understand the Task**:
+    *   `TASK .claude role=researcher round=1`
+    *   `CLAIM (untitled) STATUS open falsifier: (none set - write one)`
+    *   Gather evidence for this claim.
+    *   Label every figure with its date, the population it refers to, its sample
+ size and a source link. Flag any source with a commercial interest.
+    *   If evidence does not exist, state this and stop.
+    *   Write the work to: `discussion/claims/.claude/r01-research--harness-nflinv
+.md`.
+    *   Use the round frontmatter in `AGENTS.md`.
+    *   Run `bin/sync`.
+3.  **Context Check**:
+    *   Current workinConfirmed with tool evidence: session f6b97ac8 (the C003 adjudicator round, Claude Code, cla
+ude-sonnet-5-5, logged [11:29] round 2/7, committed 11:30:08) had cwd `/home/dennis/nflinventory/discussion/claims` for
+ 8 tool calls. Claude Code created its `.claude/.cc-writes` artifact directory in that
+ cwd → `discussion/claims/.claude/` (mtime 2026-11-24 11:29:01 CET).
+
+So the causal chain is fully pinned:
+1. bin/claude-round.sh (adjudicator, claude-sonnet-5-5) ran the C003 verdict round at 11:29 CET
+ on 2026-11-24.
+2. During that session, Claude Code changed cwd to discussion/claims/ (8 tool calls)
+ and created its per-cwd artifact dir `.claude/.cc-writes` there.
+3. The session ended at 11:30:08 (commit d3b5537 / 014f00e), leaving the empty `.claude` dir behind.
+4. bin/next (round 3/7, [11:30]) then listed `discussion/claims/` via os.listdir, found `.claude
+` (hidden dirs sort first: "." < "C"), treated it as a claim (no claim.md → "(untitled)", falsifier "(none set - write one)", status open,
+ round 0), and dispatched this research round to hermes (me).
+5. bin/reindex did the same → index.md row "[.claude .claude](claims/.claude/claim.md)" — a dead link, since
+ claim.md does not exist.
+6. .gitignore line 19: `.claude/` with comment "Claude CLI working artifacts - never claims, never committed" — the repo's own config says .cla
+ude/ is never a claim. bin/next and bin/reindex contradict that.
+
+Impact:
+- The loop burned round 3/7 (of max_rounds_per_night 8) on a non-claim.
+- The ghost claim will be re-dispatched every night: it sorts first (ASCII "." = 46 < "C" = 67), it
+ always has priority 0, and round files written into it are gitignored so the gate/reindex never see
+ them; bin/next counts rounds by filename only (os.listdir), so it will advance the ghost through challenger/adjudicator/settle and then restart the cycle
+, indefinitely. Wait — actually, careful: my round file WILL be on disk, so bin/next's rounds(d) will count it (r01-research...
+). So the ghost claim will progress to "challenged" → challenger dispatch. Every nightly budget will feed the ghost first.
+
+Hmm wait, one more check — will bin/next really pick `.claude` first? work.sort() sorts by (PRIORITY, eff, name

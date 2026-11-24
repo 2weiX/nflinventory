@@ -1,7 +1,7 @@
 ---
 id: C004
 title: Duplicate grouping merges differing cards; group row shows g[0]
-status: weakened
+status: adjudicated
 verdict: weakened
 round: 3
 confidence: medium
