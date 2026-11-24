@@ -3,14 +3,14 @@
 Newest entry first. Every agent adds one entry at the end of its turn (format in `AGENTS.md`).
 
 ## 2026-11-24 · Claude Sonnet 5.5 · C002 + C003 import data-loss fixes
-Status: In progress (code done; `next build` not verified, see below)
-Branch / PR: none yet. The edit to app/import/page.tsx was swept into the harness's "discussion: housekeeping" commit 4b4f9e3 on main; lib/importResult.ts and lib/importResult.test.ts are still uncommitted.
+Status: In progress (code done and built clean; PR not opened; count query untested live)
+Branch / PR: story/C002-C003-import-data-loss, no PR yet. The page edit was swept into the harness's commit 4b4f9e3 on main; lib/importResult.ts and its test are committed on the branch (1830936).
 What changed:
 - C002: `undo()` in app/import/page.tsx now counts sales and listings on the batch's cards first (embedded `cards!inner` count). Sales present: undo is refused with "N sales recorded on cards from this import - delete those sales first". Only listings: the confirm names them ("M listings will be deleted too"). The card-delete error is checked; the import_batches row is only deleted if the card delete succeeded; errors are shown.
 - C003: the importer collects each sale insert's outcome; `summarizeSaleInserts` / `saleWarning` (new lib/importResult.ts) produce an amber banner "N of M sold rows lost their sale: <first message>" with an Undo link, shown even when zero sales landed. The loop keeps going.
 - No migration. The Postgres-RPC variant is deferred.
-Evidence: `npm test` 16/16 pass (7 new in lib/importResult.test.ts); `npm run typecheck` clean. `next build` FAILED here for an environmental reason, not the code: the sandbox puts a character device at /home/dennis/nflinventory/.vscode and Turbopack's CSS scan dies with "reading file .vscode: Permission denied" (also without the sandbox). A build in a clean copy was blocked by a permission denial, so it was not run. Not tested in a browser or against live Supabase (the `cards!inner` count filter is untested live).
-Open issues / next step: run `next build` in a clean checkout (CI/Vercel), open a PR, then check the undo count query on a real batch. Untracked .vscode/.idea/.bashrc etc. in the working dir are not from this change.
+Evidence: in a clean clone of the branch (so the stray .vscode in the working dir is absent): `npm test` passes, `npm run typecheck` clean, `next build` succeeds (7 routes). The count query is `select("id, cards!inner(import_batch_id)", {count:"exact", head:true}).eq("cards.import_batch_id", id)`; supabase-js emits `?select=id,cards!inner(import_batch_id)&cards.import_batch_id=eq.<id>` (checked with a stub fetch), the standard PostgREST inner-join filter, and sales/listings each have exactly one FK to cards. NOT run against live Supabase (no throwaway user available: sign-ups are off and there is no service key), so the filtering itself is unverified.
+Open issues / next step: open a PR; before merging, check the undo count on a real batch with sales (expect >0 refusal) and on a batch without (expect 0). Untracked .vscode/.idea/.bashrc etc. in the working dir are not from this change.
 Anything Dennis must do: nothing.
 
 ## 2026-11-23 · Claude (with Dennis) · Agents ship their own work
