@@ -69,3 +69,26 @@ agent failed, stopping
 NOTE  10 claims in flight, budget allows 6. Finish open claims before proposing more.
 
 TASK  C002-import-undo-cascades-into-sales   role=adjudicator  round=3
+I wrote the round 3 verdict for C002 as **upheld**. It's in `discussion/claims/C002-import-undo-cascades-into-sales/r03-verdict--harness-nflinv.md`, and `bin/sync` ran cleanly. No model collision: I'm claude-sonnet-5-5, and the earlier rounds were z-ai/glm-5.3-flash and moonshotai/kimi-k3.1-pro:free.
+
+**Why upheld**
+- Undo (`app/import/page.tsx:139`) deletes cards by batch.
+- `sales.card_id` cascades on delete (`0001_init.sql:85`).
+- The confirm dialog never mentions sales.
+- I found nothing that overrides the cascade.
+
+**What I corrected**
+- R1 said `0001_init.sql` is the only migration. `0002_comp_price.sql` also exists, but it only adds a column, so the conclusion stands.
+- R2's three objections (O1–O3):
+  - O1, the dialog omission is only wording: rejected.
+  - O2, the live FK might not cascade: partly right. `undo()` ignores the card-delete error and then deletes the batch row. If the FK didn't cascade, the cards would be orphaned silently, which is a separate bug.
+  - O3, the banner and past-imports undo differ: wrong. Both call the same `undo()`, so they show the same dialog.
+- Both rounds missed that `undo()` swallows errors.
+
+**Still open**
+- The live Supabase schema was never checked, since discussion agents can't touch it.
+- The number of sales at risk on real data is unmeasured.
+
+I set `claim.md` to settled, verdict upheld, round 3. I rated confidence high on the code evidence alone. You may want to drop it to medium, since the live schema is unconfirmed.
+
+**Proposed fix for a story agent or Dennis:** count the affected sales and listings in the dialog, or block undo when sales exist. Also check the card-delete error before deleting the batch row.
