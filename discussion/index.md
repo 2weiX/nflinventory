@@ -8,7 +8,7 @@ does not exist in public sources - that is a result, not a to-do.
 | Claim | Status | Verdict | Conf. | Rounds |
 |---|---|---|---|---|
 | [C001 First circle: survey the nflinventory app and file a claim backlog](claims/C001-first-circle-survey-the-nflinventory-app/claim.md) | open | weakened | medium | 3 |
-| [C006 Inventory loads and filters client-side; scale limit unmeasured](claims/C006-inventory-loads-and-filters-client-side-/claim.md) | open | - | unknown | 2 |
+| [C006 Inventory loads and filters client-side; scale limit unmeasured](claims/C006-inventory-loads-and-filters-client-side-/claim.md) | open | - | low | 3 |
 | [C008 S12 variant-to-eBay mapping: ePID lookup with checklist-keyword fallback](claims/C008-s12-variant-to-ebay-mapping-epid-lookup-/claim.md) | open | - | unknown | 2 |
 | [C009 S7 auth: Supabase OAuth 2.1 server lets claude.ai add the inventory MCP as a custom connector, with tool calls running under RLS as the user](claims/C009-s7-auth-supabase-oauth-2-1-server-lets-c/claim.md) | open | - | unknown | 2 |
 | [C010 S8 price source: the football MCP, not the eBay API, is the right source for each card's Price (last comp)](claims/C010-s8-price-source-the-football-mcp-not-the/claim.md) | open | - | unknown | 2 |

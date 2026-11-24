@@ -2186,3 +2186,7 @@ I wrote the round-3 verdict for C005 as **weakened**, with confidence medium. Th
 - **What survives:** one README line saying `npm run build` also needs the two variables from `.env.example`. I proposed it only; I didn't edit the README or `docs/STORIES.md`.
 - **Left open:** the placeholder-key trap, where the build passes but the first real Supabase call would fail. It belongs in a separate claim, not this one.
 - **Not checked:** I didn't re-run r01's build and dev runs, so those figures rest on r01's single observation each. I also couldn't check for a `.github` directory, because the sandbox masks it with a device file.
+[11:36] round 2/4  role=adjudicator  via bin/claude-round.sh
+NOTE  7 claims in flight, budget allows 6. Finish open claims before proposing more.
+
+TASK  C006-inventory-loads-and-filters-client-side-   role=adjudicator  round=3
