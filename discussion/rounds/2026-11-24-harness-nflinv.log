@@ -2225,3 +2225,4 @@ The verdict is **weakened**, with medium confidence. `claim.md` now says `status
 **Sync failed:** `bin/sync` reindexed locally (11 claims) but failed all three push attempts on `fatal: couldn't find remote ref story/C002-C003-import-data-loss`. I did not force-push. Run `bin/sync` again once that remote ref issue clears.
 
 The tree also shows untracked home-directory dotfiles (`.bashrc`, `.gitconfig` and so on) that I didn't touch.
+sync failed, stopping
