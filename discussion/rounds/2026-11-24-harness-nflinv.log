@@ -2171,3 +2171,7 @@ dbe7e). The current ` M` state means the log has grown since. bin/sync will comm
 
 Let me also double-check the exact round number: brief says round=1, and the file name r01-research--harness-nfl
 inv.md. n = len(rounds(d)) + 1 where d = .claude dir — at dispatch time the dir had no round files → 1. ✓
+[11:35] round 1/4  role=adjudicator  via bin/claude-round.sh
+NOTE  7 claims in flight, budget allows 6. Finish open claims before proposing more.
+
+TASK  C005-cold-start-build-fails-opaque-without-en   role=adjudicator  round=3

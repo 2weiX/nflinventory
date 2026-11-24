@@ -1,10 +1,10 @@
 ---
 id: C005
 title: Cold-start build fails opaque without env vars
-status: open
-verdict: open
-round: 0
-confidence: unknown
+status: adjudicated
+verdict: weakened
+round: 3
+confidence: medium
 falsifier: Fresh checkout without the two Supabase env vars throws at lib/supabase.ts import; needs README note or a lazy client - falsified if the documented build path succeeds.
 decides: []
 opened: 2026-11-22
