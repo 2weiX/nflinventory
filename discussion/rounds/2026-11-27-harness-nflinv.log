@@ -99,3 +99,24 @@ Index: /home/dennis/nflinventory/discussion/claims/C001-first-circle-survey-the-
 
 [0m
 Now run bin/sync.
+[0m$ [0mZIPBIZ_AGENT=kimi-k3-1-pro bin/sync "discussion: settle C001 (backlog filed C002-C007, deployment URL supplied)"
+reindexed 11 claims, 0 decisions
+synced to origin/main
+[0m
+Done.
+
+**Action: SETTLE** — C001 status set to `settled`, verdict kept as `weakened`, round bumped to 4.
+
+**Why settle (not reopen):**
+- R03's two stated blockers have both been cured by work in the tree, not by re-argument:
+  1. **"Backlog not filed"** → all six recommended filings now exist as **C002–C007**, each with a code-grounded falsifier. Four have already run full research→challenge→verdict cycles; C002/C003/C006/C007 are settled.
+  2. **"App never observed"** → C007's Resolution records Dennis supplying `https://nflinventory-weld.vercel.app` on 2026-11-23 with harness browser verification of the login wall. The URL is now a standing fact in AGENTS.md.
+- Reopening would mean re-litigating questions R03 already weighed (grouping "material"? import loss "silent"?) with no new evidence — exactly what the protocol forbids.
+
+**Independence check:** my model (kimi-k3.1-pro:free) wrote r02 (challenger); r03 was claude-sonnet-5-5. `settle` is a boundary stage, so only the immediately-preceding round matters — that's sonnet, not me. Gate passed at sync.
+
+**Files written:**
+- `discussion/claims/C001-first-circle-survey-the-nflinventory-app/r04-settle--kimi-k3-1-pro.md`
+- `discussion/claims/C001-first-circle-survey-the-nflinventory-app/claim.md` (frontmatter updated)
+
+Synced to `origin/main`. Note: `gh` CLI isn't installed on this harness, so closing the C001 GitHub issue is left to the harness operator.
