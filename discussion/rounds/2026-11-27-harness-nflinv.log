@@ -15,3 +15,87 @@ I wrote the round 3 verdict for C009: it's **open** with low confidence, and nei
 - **Needs Dennis:** the spike needs a test Supabase project with the OAuth server enabled. The discussion agents must not touch the live inventory project.
 
 I wrote the verdict to `discussion/claims/C009-s7-auth-supabase-oauth-2-1-server-lets-c/r03-verdict--harness-nflinv.md`. I set round 3 and confidence low in `claim.md`, left status and verdict at open, and ran `bin/sync`, which succeeded (11 claims reindexed, synced to origin/main).
+[04:00] round 2/8  role=adjudicator  via bin/numes-round.sh
+TASK  C001-first-circle-survey-the-nflinventory-app   role=adjudicator  round=4
+DISPATCH bin/numes-round.sh   # round-robin: kimik31profree settles; sonnet55 wrote the last round
+CLAIM First circle: survey the nflinventory app and file a claim backlog
+[0m
+> build · moonshotai/kimi-k3.1-pro:free
+[0m
+[0m→ [0mRead AGENTS.md
+[0m✱ [0mGlob "discussion/claims/C001-first-circle-survey-the-nflinventory-app/**/*"[90m 4 matches[0m
+[0m→ [0mRead discussion/claims/C001-first-circle-survey-the-nflinventory-app/claim.md
+[0m→ [0mRead discussion/claims/C001-first-circle-survey-the-nflinventory-app/r01-research--harness-nflinv.md
+[0m→ [0mRead discussion/claims/C001-first-circle-survey-the-nflinventory-app/r02-challenge--harness-nflinv.md
+[0m→ [0mRead discussion/claims/C001-first-circle-survey-the-nflinventory-app/r03-verdict--harness-nflinv.md
+[0m→ [0mRead discussion/roster
+[0m✱ [0mGlob "discussion/claims/*/claim.md"[90m 10 matches[0m
+[0m✱ [0mGlob "bin/sync*"[90m 1 match[0m
+[0m
+[0m$ [0mgh auth status 2>&1 | head -20
+/bin/sh: 1: gh: not found
+[0m
+[0m$ [0mgh issue list --label claim --state open --limit 20 2>&1
+/bin/sh: 1: gh: not found
+[0m
+[0m$ [0mdate -u +"%Y-%m-%d %H:%M UTC"
+2026-11-27 03:06 UTC
+[0m
+[0m$ [0mgit log --oneline -5 -- discussion/claims/C002* discussion/claims/C003* discussion/claims/C004* discussion/claims/C005* discussion/claims/C006* discussion/claims/C007*
+6a47ff6 Owner decisions: C006 scale (hundreds - pagination deferred), C010 price source (MCP primary + eBay last-3-comps column)
+3486e19 discussion: round on C006-inventory-loads-and-filters-client-side-
+7c58db7 discussion: round on C005-cold-start-build-fails-opaque-without-en
+bf7b55d discussion: round on C004-duplicate-grouping-merges-differing-card
+310228e discussion: round on C004-duplicate-grouping-merges-differing-card
+[0m
+[0m✱ [0mGlob "discussion/claims/*/r*-verdict*.md"[90m 8 matches[0m
+[0m→ [0mRead bin/gate-independence
+[0m→ [0mRead bin/sync
+[0m→ [0mRead bin/numes-round.sh
+[0m→ [0mRead discussion/claims/C005-cold-start-build-fails-opaque-without-en/claim.md
+[0m→ [0mRead discussion/claims/C007-deployment-url-not-recorded-dod-item-6-c/claim.md
+[0m✱ [0mGlob "discussion/**/*settle*.md"[90m 0 matches[0m
+[0m✱ [0mGlob "bin/next*"[90m 1 match[0m
+[0m
+[0m$ [0mgit branch --show-current && git status --porcelain | head -20
+main
+ M discussion/rounds/2026-11-27-harness-nflinv.log
+[0m
+[0m→ [0mRead bin/next
+[0m→ [0mRead discussion/claims/C002-import-undo-cascades-into-sales/claim.md
+[0m→ [0mRead discussion/claims/C003-import-ignores-a-failed-sale-insert/claim.md
+[0m→ [0mRead discussion/claims/C004-duplicate-grouping-merges-differing-card/claim.md
+[0m→ [0mRead discussion/claims/C006-inventory-loads-and-filters-client-side-/claim.md
+I have the full picture now. Checking independence: my model (`moonshotai/kimi-k3.1-pro:free`) wrote r02 (challenger); r03 was claude-sonnet-5-5. Since "settle" is a boundary stage, only the immediately-preceding round matters — that's r03 (sonnet), not me. The gate permits this.
+
+Now the evidence question. The r03 verdict was "weakened" because (a) no backlog had been filed, (b) the running app couldn't be checked. Let me verify what's changed since.
+[0m
+[0m← [0mWrite discussion/claims/C001-first-circle-survey-the-nflinventory-app/r04-settle--kimi-k3-1-pro.md
+Wrote file successfully.
+[0m
+All six backlog items the r03 verdict recommended filing now exist as filed claims (C002–C007). C007 explicitly records that the running-app URL was supplied by Dennis on 2026-11-23 and the login wall was browser-verified by the harness. That is exactly the new evidence r03 said was missing.
+
+Now I'll write the settle round and update claim.md.
+[0m← [0mEdit discussion/claims/C001-first-circle-survey-the-nflinventory-app/claim.md
+Index: /home/dennis/nflinventory/discussion/claims/C001-first-circle-survey-the-nflinventory-app/claim.md
+===================================================================
+--- /home/dennis/nflinventory/discussion/claims/C001-first-circle-survey-the-nflinventory-app/claim.md
++++ /home/dennis/nflinventory/discussion/claims/C001-first-circle-survey-the-nflinventory-app/claim.md
+@@ -1,11 +1,11 @@
+ ---
+ id: C001
+ title: First circle: survey the nflinventory app and file a claim backlog
+-status: open
++status: settled
+ verdict: weakened
+-round: 3
+-confidence: medium
++round: 4
++confidence: high
+ falsifier: The survey itself, cross-checked against the README and the running app - any claim it files is re-verified by the challenger against the actual code
+ decides: []
+ opened: 2026-11-21
+ ---
+
+[0m
+Now run bin/sync.
