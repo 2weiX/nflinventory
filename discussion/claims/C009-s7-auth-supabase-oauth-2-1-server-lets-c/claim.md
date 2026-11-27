@@ -3,8 +3,8 @@ id: C009
 title: S7 auth: Supabase OAuth 2.1 server lets claude.ai add the inventory MCP as a custom connector, with tool calls running under RLS as the user
 status: open
 verdict: open
-round: 0
-confidence: unknown
+round: 3
+confidence: low
 falsifier: Falsified if Supabase's OAuth server (beta) cannot complete claude.ai's custom-connector flow (discovery, dynamic client registration or PKCE fails), or if a token it issues does not run Postgres queries as that user under row-level security. Then S7 needs its own OAuth layer in Next.js or a simpler token scheme.
 decides: [S7]
 opened: 2026-11-23

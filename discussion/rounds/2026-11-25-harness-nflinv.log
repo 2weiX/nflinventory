@@ -1,0 +1,6 @@
+[04:00] round 1/8  role=adjudicator  via bin/claude-round.sh
+TASK  C009-s7-auth-supabase-oauth-2-1-server-lets-c   role=adjudicator  round=3
+CLAIM S7 auth: Supabase OAuth 2.1 server lets claude.ai add the inventory MCP as a custom connector, with tool calls running under RLS as the user
+STATUS open  falsifier: Falsified if Supabase's OAuth server (beta) cannot complete claude.ai's custom-connector flow (discovery, dynamic client registration or PKCE fails), or if a token it issues does not run Postgres queries as that user under row-level security. Then S7 needs its own OAuth layer in Next.js or a simpler token scheme.
+Failed to authenticate. API Error: 401 OAuth access token has expired. Re-authenticate to continue.
+agent failed, stopping
