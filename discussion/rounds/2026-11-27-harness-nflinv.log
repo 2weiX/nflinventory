@@ -2,3 +2,16 @@
 TASK  C009-s7-auth-supabase-oauth-2-1-server-lets-c   role=adjudicator  round=3
 CLAIM S7 auth: Supabase OAuth 2.1 server lets claude.ai add the inventory MCP as a custom connector, with tool calls running under RLS as the user
 STATUS open  falsifier: Falsified if Supabase's OAuth server (beta) cannot complete claude.ai's custom-connector flow (discovery, dynamic client registration or PKCE fails), or if a token it issues does not run Postgres queries as that user under row-level security. Then S7 needs its own OAuth layer in Next.js or a simpler token scheme.
+I wrote the round 3 verdict for C009: it's **open** with low confidence, and neither the claim nor the falsifier is settled.
+
+- **Independence:** I'm claude-sonnet-5-5. Round 1 was glm-5.3-flash and round 2 was kimi-k3.1-pro:free, so the rule doesn't collide. I weighed the challenge as independent, but it adds no new evidence. It restates R1 and proposes an experiment.
+- **Arithmetic:** R1's "18-day-old" label for `supabase/auth#2820` is wrong. The issue was created on 2026-09-20, which makes it 64 days old at R1's date. The 18 days is the time since its last update on 2026-11-05.
+- **Where both rounds overreach:** both treat `offline_access` as unavoidable. That rests on this project's OIDC document, but Claude tries the RFC 8414 document first, and that one is still disabled and unseen. Only the `resource` trigger comes from a direct quote of Claude's behaviour.
+- **Unchecked:** I couldn't re-fetch #2820 because the fetch tool wasn't permitted this turn. Whether it has been fixed since 2026-11-05 is unknown to me.
+- **Falsifier clauses:**
+  - The RLS clause is not met and has no contrary evidence.
+  - The connector-flow clause is neither met nor refuted. It depends on a single reporter's bug report, which hasn't been reproduced or fixed.
+- **What S7 should do:** run the spike R2 specified on a throwaway Supabase project before building any consent UI, and keep the token-verification and RLS work that's needed either way. If the spike hits the 400 with a confidential client, S7 switches to its own OAuth layer or a simpler token scheme.
+- **Needs Dennis:** the spike needs a test Supabase project with the OAuth server enabled. The discussion agents must not touch the live inventory project.
+
+I wrote the verdict to `discussion/claims/C009-s7-auth-supabase-oauth-2-1-server-lets-c/r03-verdict--harness-nflinv.md`. I set round 3 and confidence low in `claim.md`, left status and verdict at open, and ran `bin/sync`, which succeeded (11 claims reindexed, synced to origin/main).
