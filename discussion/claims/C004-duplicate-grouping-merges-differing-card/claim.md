@@ -1,9 +1,9 @@
 ---
 id: C004
 title: Duplicate grouping merges differing cards; group row shows g[0]
-status: adjudicated
+status: settled
 verdict: weakened
-round: 3
+round: 4
 confidence: medium
 falsifier: Groups may contain cards differing in money fields not covered by the grouping key; the row shows g[0] while totals use all members - needs a concrete divergent pair to file.
 decides: []
